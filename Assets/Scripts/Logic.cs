@@ -20,6 +20,9 @@ public class Logic : MonoBehaviour
     private TMP_InputField _numberInput;
     [SerializeField]
     private TMP_Text _txtResult;
+    [SerializeField]
+    private SDKLogic _sdkLogic;
+
 
     private int _currentAttempts = 0;
     private int _answer;
@@ -77,12 +80,12 @@ public class Logic : MonoBehaviour
 
     public void OnOSPBuyAttempts()
     {
-
+        
     }
 
     public void OnSDKBuyAttempts()
     {
-
+        _sdkLogic.MakePurchase();
     }
 
     private void OnBuyAttemptsReturned()

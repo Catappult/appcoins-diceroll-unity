@@ -1,8 +1,15 @@
 apply plugin: 'com.android.library'
 **APPLY_PLUGINS**
 
+repositories {
+    google()
+    mavenCentral()
+}
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation("io.catappult:android-appcoins-billing:0.7.2.0") 
+    implementation('org.json:json:20210307')
 **DEPS**}
 
 android {
@@ -33,7 +40,9 @@ android {
         noCompress = **BUILTIN_NOCOMPRESS** + unityStreamingAssets.tokenize(', ')
         ignoreAssetsPattern = "!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~"
     }**PACKAGING_OPTIONS**
-}**REPOSITORIES**
+}
+
+**REPOSITORIES**
 **IL_CPP_BUILD_SETUP**
 **SOURCE_BUILD_SETUP**
 **EXTERNAL_SOURCES**
