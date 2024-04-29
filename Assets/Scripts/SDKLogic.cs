@@ -1,4 +1,7 @@
 using UnityEngine;
+using System.Collections;
+using System;
+using System.Diagnostics;
 
 public class SDKLogic : MonoBehaviour
 {
@@ -6,73 +9,98 @@ public class SDKLogic : MonoBehaviour
     public string publicKey = "YourPublicKey";
     public string sku = "YourProductSku";
     public string developerPayload = "YourDeveloperPayload";
+    public Logic logic;
+
+    private AndroidJavaClass aptoBridgeClass;
 
     private void Start()
     {
-        // Initialize AptoBridge via UnitySendMessage
-        var initializeData = new AptoBridgeData(unityClassName, publicKey, true);
-        string initializeJson = JsonUtility.ToJson(initializeData);
-        CallAptoBridgeMethod("Initialize", initializeJson);
+        aptoBridgeClass = new AndroidJavaClass("AptoBridge");
+        // Initialize AptoBridge
+        aptoBridgeClass.CallStatic("Initialize", "SDKLogic", publicKey , true);
     }
 
+    // Method to start the billing flow from AptoBridge
     public void MakePurchase()
     {
-        // Start the purchase process via UnitySendMessage
-        var purchaseData = new PurchaseData(sku, developerPayload);
-        string purchaseJson = JsonUtility.ToJson(purchaseData);
-        CallAptoBridgeMethod("ProductsStartPay", purchaseJson);
-    }
+        string appcoinsWalletPackage = "com.appcoins.wallet";
+        bool appcoinsWalletInstalled = IsPackageInstalled(appcoinsWalletPackage);
 
-    private void OnMsgFromPlugin(string message)
-    {
-        // Handle messages received from the plugin
-        Debug.Log("Message from plugin: " + message);
-    }
-
-    private void CallAptoBridgeMethod(string methodName, string jsonParams)
-    {
-        using (var aptoBridgeClass = new AndroidJavaClass(unityClassName))
+        if (!appcoinsWalletInstalled)
         {
-            if (aptoBridgeClass != null)
-            {
-                // Convert JSON string to JSONObject
-                AndroidJavaObject jsonObject = new AndroidJavaObject("org.json.JSONObject", jsonParams);
+            // Prompt the user to install the Appcoins Wallet
+            ShowDialogToInstallWallet();
+        }
+        else
+        {
+            aptoBridgeClass.CallStatic("ProductsStartPay", sku, developerPayload);
+        }
+    }
 
-                // Call the SendUnityMessage method with JSONObject parameter
-                aptoBridgeClass.CallStatic("SendUnityMessage", jsonObject);
-            }
-            else
-            {
-                Debug.LogError("Failed to find AptoBridge class.");
-            }
+    // Method to receive purchase result from AptoBridge
+    public void OnMsgFromPlugin(string purchaseJson)
+    {
+        PurchaseResult purchaseResult = JsonUtility.FromJson<PurchaseResult>(purchaseJson);
+
+        bool succeed = purchaseResult.succeed;
+        int responseCode = purchaseResult.responseCode;
+
+        if(purchaseResult.succeed)
+        {
+            logic.UpdateAttempts(3);
+            aptoBridgeClass.CallStatic("ProductsStartConsume", responseCode);
+        }
+    }
+
+    private static bool IsPackageInstalled(string packageName)
+    {
+        try
+        {
+            AndroidJavaClass packageManagerClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+            AndroidJavaObject packageManager = packageManagerClass.GetStatic<AndroidJavaObject>("currentActivity").Call<AndroidJavaObject>("getPackageManager");
+            packageManager.Call<AndroidJavaObject>("getPackageInfo", packageName, packageManager.GetStatic<int>("GET_ACTIVITIES"));
+            return true;
+        }
+        catch (Exception e)
+        {
+            return false;
+        }
+    }
+
+    private static void ShowDialogToInstallWallet()
+    {
+        OpenAptoideStoreApp("com.appcoins.wallet");
+    }
+
+    private static void OpenAptoideStoreApp(string packageName)
+    {
+        try
+        {
+            // Open the Aptoide store app using its package name
+            AndroidJavaClass uriClass = new AndroidJavaClass("android.net.Uri");
+            AndroidJavaObject uri = uriClass.CallStatic<AndroidJavaObject>("parse", "market://details?id=" + packageName);
+
+            AndroidJavaClass intentClass = new AndroidJavaClass("android.content.Intent");
+            string action = intentClass.GetStatic<string>("ACTION_VIEW");
+
+            AndroidJavaObject intent = new AndroidJavaObject("android.content.Intent", action, uri);
+
+            AndroidJavaClass unityPlayerClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+            AndroidJavaObject currentActivity = unityPlayerClass.GetStatic<AndroidJavaObject>("currentActivity");
+
+            currentActivity.Call("startActivity", intent);
+        }
+        catch (Exception e)
+        {
+            print("Error opening Aptoide store app: " + e.Message);
         }
     }
 
     [System.Serializable]
-    private class AptoBridgeData
+    public class PurchaseResult
     {
-        public string unityClassName;
-        public string publicKey;
-        public bool needLog;
-
-        public AptoBridgeData(string _unityClassName, string _publicKey, bool _needLog)
-        {
-            unityClassName = _unityClassName;
-            publicKey = _publicKey;
-            needLog = _needLog;
-        }
-    }
-
-    [System.Serializable]
-    private class PurchaseData
-    {
-        public string sku;
-        public string developerPayload;
-
-        public PurchaseData(string _sku, string _developerPayload)
-        {
-            sku = _sku;
-            developerPayload = _developerPayload;
-        }
+        public string msg;
+        public bool succeed;
+        public int responseCode;
     }
 }
