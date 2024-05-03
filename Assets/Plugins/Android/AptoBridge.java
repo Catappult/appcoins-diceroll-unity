@@ -36,7 +36,7 @@ public class AptoBridge {
     private static String LOG_TAG = "[AptoBridge]";
 
     private static Activity activity;
-    private static String unityClassName = "Logic";
+    private static String unityClassName = "SDKLogic";
     private static String publicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvqN6DDp164Z6T/sc6wfMX+8GSkNr3GJYG+DqgpD07ke/CwaXC+dkuahivhGOUFVDHi6l4iHhcnfy+mv6aZOttgvmbBsqjY5BgTUZV7yYXR0vnElvxXYge9Yor7q8x5elKF3wXHp6EVgyU1zGtVjivaiJRip6E6kpSagkY4DpdBS2SVEZbIhl+5yHW6spnZrE4thgOZCd7rdg5Nn1HlMkajlpnfACRsqWPoBpk8fgfCptDKicO7hY1tRkvSrtCXa7fJC6cwt6j2JdbzpbHUNS6fdMUGOnds9cyGTHtTp+z9R8ffb+y1DXGLVEu/4YFPFiJuWN7esSv/xEIliEIfK1GwIDAQAB";
 
     private static boolean needLog = true;

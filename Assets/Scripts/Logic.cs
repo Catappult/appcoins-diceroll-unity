@@ -21,7 +21,7 @@ public class Logic : MonoBehaviour
     [SerializeField]
     private TMP_Text _txtResult;
     [SerializeField]
-    private SDKLogic _sdkLogic;
+    private AptoPurchaseManager _aptoPurchaseManager;
 
 
     private int _currentAttempts = 0;
@@ -37,6 +37,15 @@ public class Logic : MonoBehaviour
             _currentAttempts = _startingAttempts;
         }
         UpdateAttempts(_currentAttempts);
+    }
+
+    void Update()
+    {
+        if(_aptoPurchaseManager.ValidateLastPurchase())
+        {
+            UpdateAttempts(_startingAttempts);
+            Debug.LogError("Bought attempts.");
+        }
     }
 
     public void OnRollDicePressed()
@@ -85,7 +94,7 @@ public class Logic : MonoBehaviour
 
     public void OnSDKBuyAttempts()
     {
-        _sdkLogic.MakePurchase();
+        
     }
 
     private void OnBuyAttemptsReturned()
@@ -93,7 +102,7 @@ public class Logic : MonoBehaviour
         UpdateAttempts(_currentAttempts + _startingAttempts);
     }
 
-    private void UpdateAttempts(int val)
+    public void UpdateAttempts(int val)
     {
         _currentAttempts = val;
         PlayerPrefs.SetInt(ATTEMPTS_KEY, _currentAttempts);
