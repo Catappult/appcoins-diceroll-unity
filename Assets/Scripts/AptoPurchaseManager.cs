@@ -34,8 +34,8 @@ public class AptoPurchaseManager : MonoBehaviour
     public string publicKey = "YOUR_PUBLIC_KEY"; // Public key for AppCoins billing
     public string sku = "YOUR_SKU_ID"; // SKU ID for the item to be purchased
     public string developerPayload = "YOUR_DEVELOPER_PAYLOAD"; // Developer payload for verification (optional)
-    public bool lastPurchaseCheck = false; // Check for purchase
-
+    private bool lastPurchaseCheck = false; // Check last purchase used in ValidateLastPurchase
+    private bool walletActivated = false; // ****TEMP***** Checks if the app is activated via OnMsgFromPlugin, should be removed when the AptoBridge script is updated.
     private AndroidJavaClass aptoBridgeClass; // Reference to the AptoBridge AndroidJavaClass
 
     void Start()
@@ -50,12 +50,17 @@ public class AptoPurchaseManager : MonoBehaviour
         }
     }
 
-    // Method to query the purchase made upon the closure of the wallet
+    // ****TEMP***** Method to query the purchase made upon the closure of the wallet in order to consume it
+    // Should not be required when the AptoBridge script is updated, making the comsuption occur in the OnMsgFromPlugin method
     private void OnApplicationFocus(bool focusStatus)
     {
-        if(focusStatus == true)
+        if(walletActivated) 
         {
-            aptoBridgeClass.CallStatic("QueryPurchases");
+            if(focusStatus == true)
+            {
+                aptoBridgeClass.CallStatic("QueryPurchases");
+                walletActivated = false;
+            }
         }
     }
 
@@ -111,6 +116,7 @@ public class AptoPurchaseManager : MonoBehaviour
                 else
                 {
                     Debug.LogError("Launched the billing flow.");
+                    walletActivated = true;
                 }
                 break;
 
@@ -125,8 +131,9 @@ public class AptoPurchaseManager : MonoBehaviour
                     Debug.LogError("Made the purchase sucesfully.");
                 }
                 break;
-
+                
             case "ProductsConsumeResult":
+                // Handle product purchase comsuption
                 if (!purchaseData.succeed)
                 {
                     Debug.LogError("Failed to consume the purchase.");
@@ -147,6 +154,7 @@ public class AptoPurchaseManager : MonoBehaviour
                     {
                         itemPurchased = true;
                         aptoBridgeClass.CallStatic("ProductsStartConsume", purchase.token);
+                        // ****TEMP***** Bool that checks that the purchase went through, should be moved to the ProductPayResult case when the AptoBridge script is updated.
                         lastPurchaseCheck = true;
                         Debug.Log("Item already purchased.");
                         break;

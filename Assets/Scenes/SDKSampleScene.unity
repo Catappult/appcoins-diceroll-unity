@@ -515,7 +515,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -75, y: 0}
+  m_AnchoredPosition: {x: -85, y: 0}
   m_SizeDelta: {x: 50, y: 50}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &175155731
@@ -2287,7 +2287,6 @@ MonoBehaviour:
   publicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvqN6DDp164Z6T/sc6wfMX+8GSkNr3GJYG+DqgpD07ke/CwaXC+dkuahivhGOUFVDHi6l4iHhcnfy+mv6aZOttgvmbBsqjY5BgTUZV7yYXR0vnElvxXYge9Yor7q8x5elKF3wXHp6EVgyU1zGtVjivaiJRip6E6kpSagkY4DpdBS2SVEZbIhl+5yHW6spnZrE4thgOZCd7rdg5Nn1HlMkajlpnfACRsqWPoBpk8fgfCptDKicO7hY1tRkvSrtCXa7fJC6cwt6j2JdbzpbHUNS6fdMUGOnds9cyGTHtTp+z9R8ffb+y1DXGLVEu/4YFPFiJuWN7esSv/xEIliEIfK1GwIDAQAB
   sku: attempts
   developerPayload: test
-  lastPurchaseCheck: 0
 --- !u!1 &1029791373
 GameObject:
   m_ObjectHideFlags: 0
@@ -3836,7 +3835,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 75, y: 0}
+  m_AnchoredPosition: {x: 85, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &1735715257
