@@ -50,21 +50,26 @@ public class Logic : MonoBehaviour
 
     public void OnRollDicePressed()
     {
-        if (_currentAttempts <= 0)
-        {
-            Debug.LogError("Trying to roll without attempts, bailing...");
-            return;
+        if(string.IsNullOrEmpty(_numberInput.text)){
+            _ShowAndroidToastMessage("Please insert a number from 1 to 6.");
+        }else{
+            if (_currentAttempts <= 0)
+            {
+                _ShowAndroidToastMessage("There are no more attempts, please buy more attempts.");
+                Debug.LogError("Trying to roll without attempts, bailing...");
+                return;
+            }
+
+            //Sanity keeping
+            _txtResult.gameObject.SetActive(false);
+
+            UpdateAttempts(_currentAttempts - 1);
+
+            int diceValue = Random.Range(1, 7); //Max exclusive
+            _dice.SetValue(diceValue);
+
+            VerifyAnswerForDiceValue(diceValue);
         }
-
-        //Sanity keeping
-        _txtResult.gameObject.SetActive(false);
-
-        UpdateAttempts(_currentAttempts - 1);
-
-        int diceValue = Random.Range(1, 7); //Max exclusive
-        _dice.SetValue(diceValue);
-
-        VerifyAnswerForDiceValue(diceValue);
     }
 
     private void VerifyAnswerForDiceValue(int diceValue)
@@ -94,7 +99,12 @@ public class Logic : MonoBehaviour
 
     public void OnSDKBuyAttempts()
     {
-        
+            if (_currentAttempts < 3){
+                _ShowAndroidToastMessage("Making Purchase");
+                _aptoPurchaseManager.StartPurchase();
+            }else{
+                _ShowAndroidToastMessage("You already have max attempts. Roll dice first.");
+            }
     }
 
     private void OnBuyAttemptsReturned()
@@ -107,5 +117,22 @@ public class Logic : MonoBehaviour
         _currentAttempts = val;
         PlayerPrefs.SetInt(ATTEMPTS_KEY, _currentAttempts);
         _txtAttempts.text = _currentAttempts.ToString();
+        _ShowAndroidToastMessage("Attempt Consumed.");
+    }
+
+    private void _ShowAndroidToastMessage(string message)
+    {
+        AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+        AndroidJavaObject unityActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+
+        if (unityActivity != null)
+        {
+            AndroidJavaClass toastClass = new AndroidJavaClass("android.widget.Toast");
+            unityActivity.Call("runOnUiThread", new AndroidJavaRunnable(() =>
+            {
+                AndroidJavaObject toastObject = toastClass.CallStatic<AndroidJavaObject>("makeText", unityActivity, message, 0);
+                toastObject.Call("show");
+            }));
+        }
     }
 }
