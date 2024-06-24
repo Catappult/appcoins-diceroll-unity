@@ -117,7 +117,6 @@ public class Logic : MonoBehaviour
         _currentAttempts = val;
         PlayerPrefs.SetInt(ATTEMPTS_KEY, _currentAttempts);
         _txtAttempts.text = _currentAttempts.ToString();
-        _ShowAndroidToastMessage("Attempt Consumed.");
     }
 
     private void _ShowAndroidToastMessage(string message)

@@ -38,6 +38,8 @@ public class AptoPurchaseManager : MonoBehaviour
     private bool walletActivated = false; // ****TEMP***** Checks if the app is activated via OnMsgFromPlugin, should be removed when the AptoBridge script is updated.
     private AndroidJavaClass aptoBridgeClass; // Reference to the AptoBridge AndroidJavaClass
 
+    private string tokenPurchase;
+
     void Start()
     {
         if (Application.platform == RuntimePlatform.Android)
@@ -50,18 +52,33 @@ public class AptoPurchaseManager : MonoBehaviour
         }
     }
 
-    // ****TEMP***** Method to query the purchase made upon the closure of the wallet in order to consume it
-    // Should not be required when the AptoBridge script is updated, making the comsuption occur in the OnMsgFromPlugin method
     private void OnApplicationFocus(bool focusStatus)
     {
+        Debug.Log("[AptoBridge - Unity Side] - On Application Focus ");
+
+        string hasDonePurchase = PlayerPrefs.GetString("hasDonePurchase","-");
+        string purchaseData = PlayerPrefs.GetString("purchaseData","-");
+        string purchaseSignature = PlayerPrefs.GetString("purchaseSignature","-");
+
+        //convertString to Json
+        PurchaseData purchaseDataJson = JsonUtility.FromJson<PurchaseData>(purchaseData);
+        //getTheToken
+        tokenPurchase = purchaseDataJson.purchaseToken;
+
+        if(hasDonePurchase=="1"){
+                    aptoBridgeClass.CallStatic("ShareActivityResult", 51, -1, purchaseData, purchaseSignature);
+        }
+
         if(walletActivated) 
         {
             if(focusStatus == true)
             {
                 aptoBridgeClass.CallStatic("QueryPurchases");
+                //StartPurchase();
                 walletActivated = false;
             }
         }
+
     }
 
     // Method to initialize the AptoBridge plugin
@@ -95,7 +112,8 @@ public class AptoPurchaseManager : MonoBehaviour
     {
         // Deserialize the JSON data into PurchaseData object
         PurchaseData purchaseData = JsonUtility.FromJson<PurchaseData>(message);
-
+        Debug.Log("[AptoBridge - Unity Side] - Printing ---> " + purchaseData.msg);
+        
         // Switch based on the message type received
         switch (purchaseData.msg)
         {
@@ -128,6 +146,16 @@ public class AptoPurchaseManager : MonoBehaviour
                 }
                 else
                 {
+                    aptoBridgeClass.CallStatic("ProductsStartConsume", tokenPurchase);
+
+
+                    PlayerPrefs.SetString("hasDonePurchase","-");
+                    PlayerPrefs.SetString("purchaseData","-");
+                    PlayerPrefs.SetString("purchaseSignature","-");
+                    aptoBridgeClass.CallStatic("ShareActivityResult", 0, 0, "", "");
+
+                    //CallStatic novo metodo para consumir apos resultado do
+                    lastPurchaseCheck = true;
                     Debug.LogError("Made the purchase sucesfully.");
                 }
                 break;
@@ -153,9 +181,9 @@ public class AptoPurchaseManager : MonoBehaviour
                     if (purchase.sku == sku)
                     {
                         itemPurchased = true;
-                        aptoBridgeClass.CallStatic("ProductsStartConsume", purchase.token);
+                        //aptoBridgeClass.CallStatic("ProductsStartConsume", purchase.token);
                         // ****TEMP***** Bool that checks that the purchase went through, should be moved to the ProductPayResult case when the AptoBridge script is updated.
-                        lastPurchaseCheck = true;
+                        //lastPurchaseCheck = true;
                         Debug.Log("Item already purchased.");
                         break;
                     }

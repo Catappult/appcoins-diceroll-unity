@@ -19,7 +19,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="com.android.vending.BILLING" />
     <application>
-        <activity android:name="com.unity3d.player.UnityPlayerActivity"
+        <activity android:name="com.appcoins.diceroll.OverrideExample"
                   android:theme="@style/UnityThemeSelector">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

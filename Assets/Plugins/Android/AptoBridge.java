@@ -5,6 +5,7 @@ import android.util.Log;
 import android.content.Context;
 import android.content.DialogInterface;
 
+import android.content.Intent;
 
 import com.appcoins.sdk.billing.listeners.*;
 import com.appcoins.sdk.billing.AppcoinsBillingClient;
@@ -204,24 +205,20 @@ public class AptoBridge {
                         "BDS"
                 );
 
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                final int responseCode = cab.launchBillingFlow(activity, billingFlowParams);
-                JSONObject jsonObject = new JSONObject();
-                try {
-                    jsonObject.put("msg", MSG_LAUNCH_BILLING_RESULT);
-                    jsonObject.put("succeed", responseCode == ResponseCode.OK.getValue());
-                    jsonObject.put("responseCode", responseCode);
-                }
-                catch (JSONException e)
-                {
-                    e.printStackTrace();
-                }
+        final int responseCode = cab.launchBillingFlow(activity, billingFlowParams);
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("msg", MSG_LAUNCH_BILLING_RESULT);
+            jsonObject.put("succeed", responseCode == ResponseCode.OK.getValue());
+            jsonObject.put("responseCode", responseCode);
+        }
+        catch (JSONException e)
+        {
+            e.printStackTrace();
+        }
 
-                SendUnityMessage(jsonObject);
-            }
-        });
+        SendUnityMessage(jsonObject);
+          
     }
 
     public static void QueryPurchases()
@@ -315,6 +312,21 @@ public class AptoBridge {
 
         return jsonObject;
     }
+
+
+    public static void ShareActivityResult(int requestCode, int resultCode, String dataPurchase, String dataSignature) {
+        AptoLog("Launching Shared Activity Result. reqCode " + requestCode + " resultCode: " + resultCode + " dataPurchase: " + dataPurchase + "dataSignature: " + dataSignature);
+        Intent intent = new Intent();
+        if(requestCode==51){
+            intent.putExtra("INAPP_PURCHASE_DATA", dataPurchase);
+            intent.putExtra("INAPP_DATA_SIGNATURE", dataSignature);
+            cab.onActivityResult(requestCode, resultCode, intent);
+        }else{
+            intent.removeExtra("INAPP_PURCHASE_DATA");
+            intent.removeExtra("INAPP_DATA_SIGNATURE");
+        }
+    }
+
 
     public static void AptoLog(String msg) {
         if (needLog) {
