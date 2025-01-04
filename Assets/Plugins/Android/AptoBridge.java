@@ -5,6 +5,8 @@ import android.util.Log;
 import android.content.Context;
 import android.content.DialogInterface;
 
+import android.content.pm.PackageManager;
+
 
 import com.appcoins.sdk.billing.listeners.*;
 import com.appcoins.sdk.billing.AppcoinsBillingClient;
@@ -41,6 +43,8 @@ public class AptoBridge {
 
     private static boolean needLog = true;
 
+    public static AppcoinsBillingClient cab = null;
+
     private static AppCoinsBillingStateListener appCoinsBillingStateListener = new AppCoinsBillingStateListener() {
         @Override
         public void onBillingSetupFinished(int responseCode) {
@@ -75,7 +79,6 @@ public class AptoBridge {
         }
     };
 
-    public static AppcoinsBillingClient cab = null;
 
     private static PurchasesUpdatedListener purchasesUpdatedListener = new PurchasesUpdatedListener() {
         @Override
@@ -224,6 +227,44 @@ public class AptoBridge {
         });
     }
 
+
+
+    public static void ProductsStartSubsPay(String sku, String developerPayload)
+    {
+        AptoLog("Launching purchase flow.");
+        // Your sku type, can also be SkuType.subs.toString()
+        String skuType = SkuType.subs.toString();
+        BillingFlowParams billingFlowParams =
+                new BillingFlowParams(
+                        sku,
+                        skuType,
+                        "orderId=" +System.currentTimeMillis(),
+                        developerPayload,
+                        "BDS"
+                );
+
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                final int responseCode = cab.launchBillingFlow(activity, billingFlowParams);
+                JSONObject jsonObject = new JSONObject();
+                try {
+                    jsonObject.put("msg", MSG_LAUNCH_BILLING_RESULT);
+                    jsonObject.put("succeed", responseCode == ResponseCode.OK.getValue());
+                    jsonObject.put("responseCode", responseCode);
+                }
+                catch (JSONException e)
+                {
+                    e.printStackTrace();
+                }
+
+                SendUnityMessage(jsonObject);
+            }
+        });
+    }
+
+
+
     public static void QueryPurchases()
     {
         PurchasesResult purchasesResult = cab.queryPurchases(SkuType.inapp.toString());
@@ -319,6 +360,21 @@ public class AptoBridge {
     public static void AptoLog(String msg) {
         if (needLog) {
             Log.d(LOG_TAG, msg);
+        }
+    }
+
+    public static boolean GetCab() {
+        return cab!=null;
+    }
+
+    public static boolean HasWallet() {
+        Context context = activity.getApplicationContext();
+        PackageManager pm = context.getPackageManager();
+        try {
+            pm.getPackageInfo("com.appcoins.wallet", PackageManager.GET_ACTIVITIES);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
         }
     }
 }

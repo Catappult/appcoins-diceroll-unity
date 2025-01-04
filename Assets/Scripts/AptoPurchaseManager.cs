@@ -35,8 +35,11 @@ public class AptoPurchaseManager : MonoBehaviour
     public string sku = "YOUR_SKU_ID"; // SKU ID for the item to be purchased
     public string developerPayload = "YOUR_DEVELOPER_PAYLOAD"; // Developer payload for verification (optional)
     private bool lastPurchaseCheck = false; // Check last purchase used in ValidateLastPurchase
+    private bool lastSubscriptionCheck = false; // Check last purchase used in ValidateLastPurchase
     private bool walletActivated = false; // ****TEMP***** Checks if the app is activated via OnMsgFromPlugin, should be removed when the AptoBridge script is updated.
     private AndroidJavaClass aptoBridgeClass; // Reference to the AptoBridge AndroidJavaClass
+
+    public bool isInitialized = false;
 
     void Start()
     {
@@ -68,12 +71,23 @@ public class AptoPurchaseManager : MonoBehaviour
     private void InitializeAptoBridge()
     {
         aptoBridgeClass.CallStatic("Initialize", this.gameObject.name, publicKey, true);
+        Debug.Log("Launch Init!");
+        isInitialized = aptoBridgeClass.CallStatic<bool>("GetCab");
+        Debug.Log("isInitialized: " + isInitialized.ToString());
     }
 
     // Method to start the purchase process
     public void StartPurchase()
     {
-        aptoBridgeClass.CallStatic("ProductsStartPay", sku, developerPayload);
+        string skuInApp = sku.Split(';')[0];
+        aptoBridgeClass.CallStatic("ProductsStartPay", skuInApp, developerPayload);
+    }
+
+    public void StartSubscription()
+    {
+        string skuSubs = sku.Split(';')[1];
+        aptoBridgeClass.CallStatic("ProductsStartSubsPay", skuSubs, developerPayload);
+        Debug.Log("Launch Subscription!");
     }
 
     // Example variable for other classes to call in order to validate the last purchase.
@@ -82,6 +96,19 @@ public class AptoPurchaseManager : MonoBehaviour
         if (lastPurchaseCheck)
         {
             lastPurchaseCheck = false;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public bool ValidateLastSubsPurchase()
+    {
+        if (lastSubscriptionCheck)
+        {
+            lastSubscriptionCheck = false;
             return true;
         }
         else
@@ -129,6 +156,17 @@ public class AptoPurchaseManager : MonoBehaviour
                 else
                 {
                     Debug.LogError("Made the purchase sucesfully.");
+                    foreach (Purchase purchase in purchaseData.purchases)
+                    {
+                        if(purchase.itemType == "subs") {
+                            Debug.Log("Subscription purchased.");
+                            lastSubscriptionCheck = true;
+                        } else {
+                            Debug.Log("Item purchased.");
+                            lastPurchaseCheck = true;
+                        }
+                    }
+
                 }
                 break;
                 
@@ -155,7 +193,14 @@ public class AptoPurchaseManager : MonoBehaviour
                         itemPurchased = true;
                         aptoBridgeClass.CallStatic("ProductsStartConsume", purchase.token);
                         // ****TEMP***** Bool that checks that the purchase went through, should be moved to the ProductPayResult case when the AptoBridge script is updated.
-                        lastPurchaseCheck = true;
+                        
+                        if(purchase.itemType == "subs") {
+                            Debug.Log("Subscription purchased.");
+                            lastSubscriptionCheck = true;
+                        } else {
+                            Debug.Log("Item purchased.");
+                            lastPurchaseCheck = true;
+                        }
                         Debug.Log("Item already purchased.");
                         break;
                     }
@@ -168,4 +213,15 @@ public class AptoPurchaseManager : MonoBehaviour
                 break;
         }
     }
+
+
+    public bool isCabInitialized() {
+        return aptoBridgeClass.CallStatic<bool>("GetCab");
+    }
+
+    public bool hasWallet() {
+        return aptoBridgeClass.CallStatic<bool>("HasWallet");
+    }
+
+
 }

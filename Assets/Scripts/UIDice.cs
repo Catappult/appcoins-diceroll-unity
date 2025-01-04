@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UIDice : MonoBehaviour
 {
@@ -20,6 +21,7 @@ public class UIDice : MonoBehaviour
 
     private void TurnAllFacesOff()
     {
+             
         foreach (GameObject face in _faces)
         {
             TurnObjectOff(face);
@@ -41,6 +43,9 @@ public class UIDice : MonoBehaviour
         }
 
         TurnAllFacesOff();
+        
+        
         _faces[value - 1].SetActive(true);
+          
     }
 }
