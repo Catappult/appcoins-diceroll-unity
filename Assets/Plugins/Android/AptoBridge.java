@@ -207,10 +207,11 @@ public class AptoBridge {
                         "BDS"
                 );
 
+        final int responseCode = cab.launchBillingFlow(activity, billingFlowParams);
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                final int responseCode = cab.launchBillingFlow(activity, billingFlowParams);
+                
                 JSONObject jsonObject = new JSONObject();
                 try {
                     jsonObject.put("msg", MSG_LAUNCH_BILLING_RESULT);
