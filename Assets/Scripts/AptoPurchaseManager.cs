@@ -71,7 +71,7 @@ public class AptoPurchaseManager : MonoBehaviour
     private void InitializeAptoBridge()
     {
         aptoBridgeClass.CallStatic("Initialize", this.gameObject.name, publicKey, true);
-        Debug.Log("Launch Init!");
+        Debug.Log("Launch Init! PK : " + publicKey);
         isInitialized = aptoBridgeClass.CallStatic<bool>("GetCab");
         Debug.Log("isInitialized: " + isInitialized.ToString());
     }
@@ -122,6 +122,8 @@ public class AptoPurchaseManager : MonoBehaviour
     {
         // Deserialize the JSON data into PurchaseData object
         PurchaseData purchaseData = JsonUtility.FromJson<PurchaseData>(message);
+        Debug.Log("[AptoBridge - Unity Side] - Printing ---> " + purchaseData.msg);
+        
 
         // Switch based on the message type received
         switch (purchaseData.msg)
@@ -156,8 +158,13 @@ public class AptoPurchaseManager : MonoBehaviour
                 else
                 {
                     Debug.LogError("Made the purchase sucesfully.");
+
+
                     foreach (Purchase purchase in purchaseData.purchases)
                     {
+
+                        aptoBridgeClass.CallStatic("ProductsStartConsume", purchase.token);
+
                         if(purchase.itemType == "subs") {
                             Debug.Log("Subscription purchased.");
                             lastSubscriptionCheck = true;
@@ -216,7 +223,7 @@ public class AptoPurchaseManager : MonoBehaviour
 
 
     public bool isCabInitialized() {
-        return aptoBridgeClass.CallStatic<bool>("GetCab");
+        return aptoBridgeClass.CallStatic<bool>("IsCabInitialized");
     }
 
     public bool hasWallet() {

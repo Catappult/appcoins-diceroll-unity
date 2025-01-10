@@ -39,8 +39,7 @@ public class AptoBridge {
 
     private static Activity activity;
     private static String unityClassName = "SDKLogic";
-    private static String publicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvqN6DDp164Z6T/sc6wfMX+8GSkNr3GJYG+DqgpD07ke/CwaXC+dkuahivhGOUFVDHi6l4iHhcnfy+mv6aZOttgvmbBsqjY5BgTUZV7yYXR0vnElvxXYge9Yor7q8x5elKF3wXHp6EVgyU1zGtVjivaiJRip6E6kpSagkY4DpdBS2SVEZbIhl+5yHW6spnZrE4thgOZCd7rdg5Nn1HlMkajlpnfACRsqWPoBpk8fgfCptDKicO7hY1tRkvSrtCXa7fJC6cwt6j2JdbzpbHUNS6fdMUGOnds9cyGTHtTp+z9R8ffb+y1DXGLVEu/4YFPFiJuWN7esSv/xEIliEIfK1GwIDAQAB";
-
+    private static String publicKey;
     private static boolean needLog = true;
 
     public static AppcoinsBillingClient cab = null;
@@ -169,8 +168,11 @@ public class AptoBridge {
     {
         AptoLog("Apto Initialize");
         activity = UnityPlayer.currentActivity;
+        //AptoLog("activity = " + activity);
         unityClassName = _unityClassName;
+        //AptoLog("unityClassName = " + unityClassName);
         publicKey = _publicKey;
+        //AptoLog("publicKey = " + publicKey);
         needLog = _needLog;
 
         cab = CatapultBillingAppCoinsFactory.BuildAppcoinsBilling(
@@ -202,7 +204,7 @@ public class AptoBridge {
                 new BillingFlowParams(
                         sku,
                         skuType,
-                        "orderId=" +System.currentTimeMillis(),
+                        null, // Deprecated parameter orderReference
                         developerPayload,
                         "BDS"
                 );
@@ -232,14 +234,14 @@ public class AptoBridge {
 
     public static void ProductsStartSubsPay(String sku, String developerPayload)
     {
-        AptoLog("Launching purchase flow.");
+        AptoLog("Launching subs flow.");
         // Your sku type, can also be SkuType.subs.toString()
         String skuType = SkuType.subs.toString();
         BillingFlowParams billingFlowParams =
                 new BillingFlowParams(
                         sku,
                         skuType,
-                        "orderId=" +System.currentTimeMillis(),
+                        null, // Deprecated parameter orderReference
                         developerPayload,
                         "BDS"
                 );
@@ -364,7 +366,7 @@ public class AptoBridge {
         }
     }
 
-    public static boolean GetCab() {
+    public static boolean IsCabInitialized() {
         return cab!=null;
     }
 
