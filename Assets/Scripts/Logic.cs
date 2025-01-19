@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
@@ -24,6 +25,7 @@ public class Logic : MonoBehaviour
     private TMP_InputField _numberInput;
     [SerializeField]
     private TMP_Text _txtResult;
+    
     [SerializeField]
     private AptoPurchaseManager _aptoPurchaseManager;
 
@@ -42,39 +44,10 @@ public class Logic : MonoBehaviour
     void Awake()
     {   
 
-
         UpdateAttempts(_startingAttempts);
 
         hasLoggedInitialization = false;
 
-        TMP_Text textComponentSubs = _btnSubsSDK.GetComponentInChildren<TMP_Text>();
-        if (_btnSubsSDK != null)
-        {
-            _btnSubsSDK.interactable = false;
-            ColorBlock colors = _btnSubsSDK.colors;
-            colors.normalColor = new Color(colors.normalColor.r, colors.normalColor.g, colors.normalColor.b, 0.5f); // Set alpha to 50%
-            _btnSubsSDK.colors = colors;
-            
-            if (textComponentSubs != null)
-            {
-                textComponentSubs.color = Color.white;
-            }
-        }
-
-
-        TMP_Text textComponentBuy = _btnBuySDK.GetComponentInChildren<TMP_Text>();
-        if (_btnBuySDK != null)
-        {
-            _btnBuySDK.interactable = false;
-            ColorBlock colors = _btnSubsSDK.colors;
-            colors.normalColor = new Color(colors.normalColor.r, colors.normalColor.g, colors.normalColor.b, 0.5f); // Set alpha to 50%
-            _btnBuySDK.colors = colors;
-            
-            if (textComponentBuy != null)
-            {
-                textComponentBuy.color = Color.white;
-            }
-        }
 
         if (PlayerPrefs.HasKey(ATTEMPTS_KEY))
             _currentAttempts = PlayerPrefs.GetInt(ATTEMPTS_KEY, 0);
@@ -83,14 +56,36 @@ public class Logic : MonoBehaviour
             _currentAttempts = _startingAttempts;
         }
 
+        if(_currentAttempts == _startingAttempts)
+        {
+            
+            _btnBuySDK.interactable = false;
+            TMP_Text textComponentBuy = _btnBuySDK.GetComponentInChildren<TMP_Text>();
+            textComponentBuy.color = Color.white;
+            _btnSubsSDK.interactable = false;
+            TMP_Text textComponentSub = _btnSubsSDK.GetComponentInChildren<TMP_Text>();
+            textComponentSub.color = Color.white;
+            
+
+        }
+
+
         UpdateAttempts(_currentAttempts);
 
 
     }
 
+    private string ExtractNumbers(string input)
+    {
+        // Define a regex pattern to match numbers (including decimal points)
+        string pattern = @"\d+(\.\d+)?";
+        Match match = Regex.Match(input, pattern);
+        return match.Value;
+    }
+
     void Update()
     {
-        
+        bool isCabInitialized = _aptoPurchaseManager.isCabInitialized();
 
         if(isGoldenDice){
             setGoldenDice();
@@ -111,7 +106,31 @@ public class Logic : MonoBehaviour
             isGoldenDice = true;
         }
 
-        
+
+        if(_currentAttempts < _startingAttempts)
+        {
+            string priceAtt = _aptoPurchaseManager.getAttemptPrice();
+            string priceSub = _aptoPurchaseManager.getSubsPrice();
+            
+            if(priceAtt != null){
+                Debug.Log("Teste Call inapp" + priceAtt );
+                _btnBuySDK.interactable = true;
+                TMP_Text textComponentBuy = _btnBuySDK.GetComponentInChildren<TMP_Text>();
+                textComponentBuy.text = "Buy Attempts: " + priceAtt;
+            }
+
+            if(priceSub != null){
+                Debug.Log("Teste Call subs" + priceSub );
+                _btnSubsSDK.interactable = true;
+                TMP_Text textComponentSubs = _btnSubsSDK.GetComponentInChildren<TMP_Text>();
+                textComponentSubs.text = "Buy Subs: " + priceSub;
+            }
+
+        }
+
+
+
+        /**
 
         //Debug.Log("Checking if billing is initialized...");
         bool isCabInitialized = _aptoPurchaseManager.isCabInitialized();
@@ -149,6 +168,7 @@ public class Logic : MonoBehaviour
 
         }
         
+        **/
         
     }
 

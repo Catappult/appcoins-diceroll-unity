@@ -26,6 +26,9 @@ import org.json.JSONArray;
 
 import java.util.*;
 
+import java.nio.charset.StandardCharsets;
+
+
 public class AptoBridge {
     private static String MSG_INITIAL_RESULT = "InitialResult";
     private static String MSG_CONNECTION_LOST = "ConnectionLost";
@@ -44,15 +47,64 @@ public class AptoBridge {
 
     public static AppcoinsBillingClient cab = null;
 
+    private static boolean isCabInitialized = false;
+
+    private static List<String> skuInappList = new ArrayList<>();
+    private static List<String> skuSubsList = new ArrayList<>();
+
+    private static String _attemptsPrice;
+    private static String _goldDicePrice;
+
+    public static void queryInappsSkus(List<String> skuInappList) {
+        // Implementation for querying in-app SKUs
+        // Example: Print the list of in-app SKUs
+        for (String sku : skuInappList) {
+            AptoLog("Querying in-app SKU: " + sku);
+        }
+        
+
+        SkuDetailsParams skuDetailsParams = new SkuDetailsParams();
+        skuDetailsParams.setItemType(SkuType.inapp.toString());
+        skuDetailsParams.setMoreItemSkus(skuInappList);
+        cab.querySkuDetailsAsync(skuDetailsParams, skuDetailsResponseListener);
+
+    }
+
+    public static void querySubsSkus(List<String> skuSubsList) {
+        // Implementation for querying subscription SKUs
+        // Example: Print the list of subscription SKUs
+        for (String sku : skuSubsList) {
+            AptoLog("Querying subscription SKU: " + sku);
+        }
+
+        SkuDetailsParams skuDetailsParams = new SkuDetailsParams();
+        skuDetailsParams.setItemType(SkuType.subs.toString());
+        skuDetailsParams.setMoreItemSkus(skuSubsList);
+        cab.querySkuDetailsAsync(skuDetailsParams, skuDetailsResponseListener);
+    }
+
+
     private static AppCoinsBillingStateListener appCoinsBillingStateListener = new AppCoinsBillingStateListener() {
         @Override
         public void onBillingSetupFinished(int responseCode) {
             AptoLog("onBillingSetupFinished responseCode = " + responseCode);
+
+            if(responseCode == ResponseCode.OK.getValue()){
+                queryInappsSkus(skuInappList);
+                querySubsSkus(skuSubsList);
+            }else{
+                _attemptsPrice=null;
+                _goldDicePrice=null;
+            }
+
+
             JSONObject jsonObject = new JSONObject();
             try {
                 jsonObject.put("msg", MSG_INITIAL_RESULT);
                 jsonObject.put("succeed", responseCode == ResponseCode.OK.getValue());
                 jsonObject.put("responseCode", responseCode);
+
+                isCabInitialized = responseCode == ResponseCode.OK.getValue();
             }
             catch (JSONException e)
             {
@@ -68,6 +120,10 @@ public class AptoBridge {
             JSONObject jsonObject = new JSONObject();
             try {
                 jsonObject.put("msg", MSG_CONNECTION_LOST);
+
+                isCabInitialized = false;
+                _attemptsPrice=null;
+                _goldDicePrice=null;
             }
             catch (JSONException e)
             {
@@ -129,33 +185,38 @@ public class AptoBridge {
     private static SkuDetailsResponseListener skuDetailsResponseListener = new SkuDetailsResponseListener() {
         @Override
         public void onSkuDetailsResponse(int responseCode, List<SkuDetails> skuDetailsList) {
-            AptoLog("Received skus " + responseCode);
+            AptoLog("Received skus " + skuDetailsList.size());
             JSONObject jsonObject = new JSONObject();
             if(responseCode == ResponseCode.OK.getValue()) {
                 JSONArray jsonSkus = new JSONArray();
                 for (SkuDetails skuDetails : skuDetailsList) {
+                    AptoLog("Processing sku: " + skuDetails.getSku());
                     JSONObject detailJson = GetSkuDetailsJson(skuDetails);
                     jsonSkus.put(detailJson);
+
+                    AptoLog("Details skus " + skuDetails.getSku());
+                    if (skuDetails.getSku().equals("attempts")) {  
+                        AptoLog("Getting price for attempts");                      
+                        _attemptsPrice = skuDetails.getPrice() + ' ' + skuDetails.getFiatPriceCurrencyCode(); // Use getter method
+                    } else if (skuDetails.getSku().equals("golden_dice")) {
+                        AptoLog("Getting price for subs");
+                        _goldDicePrice = skuDetails.getPrice() + ' ' + skuDetails.getFiatPriceCurrencyCode(); // Use getter method
+                    }
                 }
                 try {
                     jsonObject.put("msg", MSG_PRODUCTS_GET_RESULT);
                     jsonObject.put("succeed", true);
                     jsonObject.put("responseCode", responseCode);
                     jsonObject.put("products", jsonSkus);
-                }
-                catch (JSONException e)
-                {
+                } catch (JSONException e) {
                     e.printStackTrace();
                 }
-            }
-            else {
+            } else {
                 try {
                     jsonObject.put("msg", MSG_PRODUCTS_GET_RESULT);
                     jsonObject.put("succeed", false);
                     jsonObject.put("responseCode", responseCode);
-                }
-                catch (JSONException e)
-                {
+                } catch (JSONException e) {
                     e.printStackTrace();
                 }
             }
@@ -164,9 +225,11 @@ public class AptoBridge {
         }
     };
 
-    public static void Initialize(String _unityClassName, String _publicKey, boolean _needLog)
+    public static void Initialize(String _unityClassName, String _publicKey, String strSku, boolean _needLog)
     {
-        AptoLog("Apto Initialize");
+        AptoLog("Apto Initialize: " + strSku);
+        skuInappList = new ArrayList<String>(Arrays.asList(strSku.split(";")[0]));
+        skuSubsList = new ArrayList<String>(Arrays.asList(strSku.split(";")[1]));
         activity = UnityPlayer.currentActivity;
         //AptoLog("activity = " + activity);
         unityClassName = _unityClassName;
@@ -322,6 +385,9 @@ public class AptoBridge {
             jsonObject.put("fiatPriceAmountMicros", skuDetails.getFiatPriceAmountMicros());
             jsonObject.put("fiatPriceCurrencyCode", skuDetails.getFiatPriceCurrencyCode());
             jsonObject.put("itemType", skuDetails.getItemType());
+
+             AptoLog("prix: " + skuDetails.getPrice());
+
             jsonObject.put("price", skuDetails.getPrice());
             jsonObject.put("priceAmountMicros", skuDetails.getPriceAmountMicros());
             jsonObject.put("priceCurrencyCode", skuDetails.getPriceCurrencyCode());
@@ -362,12 +428,13 @@ public class AptoBridge {
 
     public static void AptoLog(String msg) {
         if (needLog) {
-            Log.d(LOG_TAG, msg);
+            //Log.d(LOG_TAG, msg);
+            Log.d(LOG_TAG, new String(msg.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8));
         }
     }
 
     public static boolean IsCabInitialized() {
-        return cab!=null;
+        return isCabInitialized;
     }
 
     public static boolean HasWallet() {
@@ -379,5 +446,21 @@ public class AptoBridge {
         } catch (PackageManager.NameNotFoundException e) {
             return false;
         }
+    }
+
+
+    public static String GetPrice(String sku) {
+        AptoLog("SKU GetPrice AptoBridge: " + sku );
+        AptoLog("attempts GetPrice AptoBridge: " + _attemptsPrice );
+        AptoLog("gold Dice GetPrice AptoBridge: " + _goldDicePrice );
+        
+        if (sku.equals("attempts")) {
+            return _attemptsPrice;
+        }
+        if (sku.equals("golden_dice")) {
+            return _goldDicePrice;
+        }
+
+        return "";
     }
 }

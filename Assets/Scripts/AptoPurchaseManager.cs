@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Threading;
 using System.Collections;
+using System.Reflection;
 
 // Define classes to deserialize JSON data received from the plugin
 [System.Serializable]
@@ -29,6 +30,9 @@ public class Purchase
     public string token;
 }
 
+
+
+
 public class AptoPurchaseManager : MonoBehaviour
 {
     public string publicKey = "YOUR_PUBLIC_KEY"; // Public key for AppCoins billing
@@ -39,7 +43,10 @@ public class AptoPurchaseManager : MonoBehaviour
     private bool walletActivated = false; // ****TEMP***** Checks if the app is activated via OnMsgFromPlugin, should be removed when the AptoBridge script is updated.
     private AndroidJavaClass aptoBridgeClass; // Reference to the AptoBridge AndroidJavaClass
 
-    public bool isInitialized = false;
+    private bool isInitialized = false;
+
+    private string _attemptPrice;
+    private string _subsPrice;
 
     void Start()
     {
@@ -70,9 +77,9 @@ public class AptoPurchaseManager : MonoBehaviour
     // Method to initialize the AptoBridge plugin
     private void InitializeAptoBridge()
     {
-        aptoBridgeClass.CallStatic("Initialize", this.gameObject.name, publicKey, true);
+        aptoBridgeClass.CallStatic("Initialize", this.gameObject.name, publicKey, sku ,true);
         Debug.Log("Launch Init! PK : " + publicKey);
-        isInitialized = aptoBridgeClass.CallStatic<bool>("GetCab");
+        //isInitialized = aptoBridgeClass.CallStatic<bool>("GetCab");
         Debug.Log("isInitialized: " + isInitialized.ToString());
     }
 
@@ -123,7 +130,9 @@ public class AptoPurchaseManager : MonoBehaviour
         // Deserialize the JSON data into PurchaseData object
         PurchaseData purchaseData = JsonUtility.FromJson<PurchaseData>(message);
         Debug.Log("[AptoBridge - Unity Side] - Printing ---> " + purchaseData.msg);
-        
+         Debug.Log("[AptoBridge - Unity Side] - Printing ---> " + purchaseData.succeed);
+         
+    
 
         // Switch based on the message type received
         switch (purchaseData.msg)
@@ -218,6 +227,14 @@ public class AptoPurchaseManager : MonoBehaviour
                     
                 }
                 break;
+
+            case "ProductsGetResult":
+                Debug.Log("Test - Getting results from. PriceInapps: " + getPriceInapp() + " PriceSubs: " + getPriceSubs());
+                
+                _attemptPrice = getPriceInapp();
+                _subsPrice = getPriceSubs();
+                
+                break;
         }
     }
 
@@ -230,5 +247,20 @@ public class AptoPurchaseManager : MonoBehaviour
         return aptoBridgeClass.CallStatic<bool>("HasWallet");
     }
 
+    public string getPriceInapp() {
+        return aptoBridgeClass.CallStatic<string>("GetPrice", sku.Split(';')[0]);
+    }
 
+
+    public string getPriceSubs() {
+        return aptoBridgeClass.CallStatic<string>("GetPrice", sku.Split(';')[1]);
+    }
+
+    public string getAttemptPrice() {
+        return _attemptPrice;
+    }
+
+    public string getSubsPrice() {
+        return _subsPrice;
+    }
 }
