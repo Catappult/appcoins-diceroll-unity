@@ -87,9 +87,13 @@ public class Logic : MonoBehaviour
     {
         bool isCabInitialized = _aptoPurchaseManager.isCabInitialized();
 
-        if(isGoldenDice){
+        Debug.LogError("3Golden Dice Active " + _aptoPurchaseManager.IsGoldenDiceSubsActive());
+            
+        if(_aptoPurchaseManager.IsGoldenDiceSubsActive()){
+            isGoldenDice = true;
             setGoldenDice();
         }
+        
 
         
         if(_aptoPurchaseManager.ValidateLastPurchase())
@@ -119,56 +123,19 @@ public class Logic : MonoBehaviour
                 textComponentBuy.text = "Buy Attempts: " + priceAtt;
             }
 
+
+
             if(priceSub != null){
-                Debug.Log("Teste Call subs" + priceSub );
-                _btnSubsSDK.interactable = true;
-                TMP_Text textComponentSubs = _btnSubsSDK.GetComponentInChildren<TMP_Text>();
-                textComponentSubs.text = "Buy Subs: " + priceSub;
+                if(!isGoldenDice){
+                    Debug.Log("Teste Call subs" + priceSub );
+                    _btnSubsSDK.interactable = true;
+                    TMP_Text textComponentSubs = _btnSubsSDK.GetComponentInChildren<TMP_Text>();
+                    textComponentSubs.text = "Buy Subs: " + priceSub;
+                }
             }
 
         }
 
-
-
-        /**
-
-        //Debug.Log("Checking if billing is initialized...");
-        bool isCabInitialized = _aptoPurchaseManager.isCabInitialized();
-        //Debug.Log("isCabInitialized: " + isCabInitialized.ToString());
-
-        bool hasWallet = _aptoPurchaseManager.hasWallet();
-        if(!hasWallet){
-            _btnSubsSDK.gameObject.SetActive(false);
-        }
-        
-
-        if (isCabInitialized && !hasLoggedInitialization)
-        {
-        
-            hasLoggedInitialization = true;
-            _btnSubsSDK.interactable = true;
-            _btnBuySDK.interactable = true;
-            ColorBlock colors = _btnSubsSDK.colors;
-            colors.normalColor = new Color(1f, 0.388f, 0.506f, 1f); // Set color to #FF6381
-            _btnSubsSDK.colors = colors;
-            _btnBuySDK.colors = colors;
-
-            TMP_Text textComponentSubs = _btnSubsSDK.GetComponentInChildren<TMP_Text>();
-            TMP_Text textComponentBuy = _btnBuySDK.GetComponentInChildren<TMP_Text>();
-
-            if (textComponentSubs != null)
-            {
-                textComponentSubs.color = Color.black;
-            }
-
-            if (textComponentBuy != null)
-            {
-                textComponentBuy.color = Color.black;
-            }
-
-        }
-        
-        **/
         
     }
 

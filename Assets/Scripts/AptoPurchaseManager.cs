@@ -48,6 +48,8 @@ public class AptoPurchaseManager : MonoBehaviour
     private string _attemptPrice;
     private string _subsPrice;
 
+    private bool isGoldenDiceSubsActive = false;
+
     void Start()
     {
         if (Application.platform == RuntimePlatform.Android)
@@ -82,6 +84,8 @@ public class AptoPurchaseManager : MonoBehaviour
         //isInitialized = aptoBridgeClass.CallStatic<bool>("GetCab");
         Debug.Log("isInitialized: " + isInitialized.ToString());
     }
+
+
 
     // Method to start the purchase process
     public void StartPurchase()
@@ -262,5 +266,15 @@ public class AptoPurchaseManager : MonoBehaviour
 
     public string getSubsPrice() {
         return _subsPrice;
+    }
+
+
+
+    public bool IsGoldenDiceSubsActive() {
+         //isGoldenDiceSub already purchased?
+        isGoldenDiceSubsActive = aptoBridgeClass.CallStatic<bool>("IsGoldenDiceSubsActive");
+        Debug.Log("2Golden Dice Active: " + isGoldenDiceSubsActive);
+        
+        return isGoldenDiceSubsActive;
     }
 }

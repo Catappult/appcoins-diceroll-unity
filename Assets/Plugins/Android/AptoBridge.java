@@ -28,6 +28,9 @@ import java.util.*;
 
 import java.nio.charset.StandardCharsets;
 
+import java.util.concurrent.CompletableFuture;
+
+
 
 public class AptoBridge {
     private static String MSG_INITIAL_RESULT = "InitialResult";
@@ -54,6 +57,9 @@ public class AptoBridge {
 
     private static String _attemptsPrice;
     private static String _goldDicePrice;
+
+    private static boolean isGoldenDiceSubsActive = false;
+
 
     public static void queryInappsSkus(List<String> skuInappList) {
         // Implementation for querying in-app SKUs
@@ -90,6 +96,8 @@ public class AptoBridge {
             AptoLog("onBillingSetupFinished responseCode = " + responseCode);
 
             if(responseCode == ResponseCode.OK.getValue()){
+                QueryPurchases();
+                QuerySubs();
                 queryInappsSkus(skuInappList);
                 querySubsSkus(skuSubsList);
             }else{
@@ -333,26 +341,62 @@ public class AptoBridge {
 
     public static void QueryPurchases()
     {
-        PurchasesResult purchasesResult = cab.queryPurchases(SkuType.inapp.toString());
-        List<Purchase> purchases = purchasesResult.getPurchases();
+        CompletableFuture.runAsync(() -> {
+            PurchasesResult purchasesResult = cab.queryPurchases(SkuType.inapp.toString());
+            List<Purchase> purchases = purchasesResult.getPurchases();
 
-        JSONArray purchasesJson = new JSONArray();
-        for (Purchase purchase : purchases) {
-            JSONObject detailJson = GetPurchaseJson(purchase);
-            purchasesJson.put(detailJson);
-        }
-        JSONObject jsonObject = new JSONObject();
-        try {
-            jsonObject.put("msg", MSG_QUERY_PURCHASES_RESULT);
-            jsonObject.put("succeed", true);
-            jsonObject.put("purchases", purchasesJson);
-        }
-        catch (JSONException e)
-        {
-            e.printStackTrace();
-        }
+            JSONArray purchasesJson = new JSONArray();
+            for (Purchase purchase : purchases) {
+                JSONObject detailJson = GetPurchaseJson(purchase);
+                purchasesJson.put(detailJson);
+            }
+            
+            JSONObject jsonObject = new JSONObject();
+            try {
+                jsonObject.put("msg", MSG_QUERY_PURCHASES_RESULT);
+                jsonObject.put("succeed", true);
+                jsonObject.put("purchases", purchasesJson);
+            }
+            catch (JSONException e)
+            {
+                e.printStackTrace();
+            }
 
-        SendUnityMessage(jsonObject);
+            SendUnityMessage(jsonObject);
+        });
+    }
+
+    public static void QuerySubs()
+    {
+        CompletableFuture.runAsync(() -> {
+            PurchasesResult purchasesResult = cab.queryPurchases(SkuType.subs.toString());
+            List<Purchase> purchases = purchasesResult.getPurchases();
+
+            JSONArray purchasesJson = new JSONArray();
+            for (Purchase purchase : purchases) {
+                JSONObject detailJson = GetPurchaseJson(purchase);
+                purchasesJson.put(detailJson);
+            }
+            
+            if (!purchases.stream().noneMatch(purchase -> "golden_dice".equals(purchase.getSku()))) {
+                AptoLog("golden_dice already purchased");
+                isGoldenDiceSubsActive = true;
+            }
+
+            
+            JSONObject jsonObject = new JSONObject();
+            try {
+                jsonObject.put("msg", MSG_QUERY_PURCHASES_RESULT);
+                jsonObject.put("succeed", true);
+                jsonObject.put("purchases", purchasesJson);
+            }
+            catch (JSONException e)
+            {
+                e.printStackTrace();
+            }
+
+            SendUnityMessage(jsonObject);
+        });
     }
 
     public static void ProductsStartConsume(String strToken)
@@ -462,5 +506,11 @@ public class AptoBridge {
         }
 
         return "";
+    }
+
+
+    public static boolean IsGoldenDiceSubsActive(){
+        AptoLog("1Golden Dice Active: " + isGoldenDiceSubsActive );
+        return isGoldenDiceSubsActive;
     }
 }

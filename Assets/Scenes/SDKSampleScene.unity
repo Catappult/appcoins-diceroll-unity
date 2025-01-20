@@ -2422,8 +2422,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   publicKey: 
-  sku: 
-  developerPayload: 
+  sku: attempts;golden_dice
+  developerPayload: Teste
 --- !u!1 &1029791373
 GameObject:
   m_ObjectHideFlags: 0
