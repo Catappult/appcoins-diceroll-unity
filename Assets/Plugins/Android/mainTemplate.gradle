@@ -1,15 +1,10 @@
 apply plugin: 'com.android.library'
 **APPLY_PLUGINS**
 
-repositories {
-    google()
-    mavenCentral()
-}
-
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation("io.catappult:android-appcoins-billing:0.9.0.5") 
-    implementation('org.json:json:20210307')
+    implementation("io.catappult:android-appcoins-billing:0.9+")
+    implementation("org.json:json:20210307")
 **DEPS**}
 
 android {
@@ -29,7 +24,6 @@ android {
         }
         versionCode **VERSIONCODE**
         versionName '**VERSIONNAME**'
-        consumerProguardFiles 'proguard-unity.txt'**USER_PROGUARD**
     }
 
     lintOptions {

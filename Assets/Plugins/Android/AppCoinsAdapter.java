@@ -32,7 +32,7 @@ import java.util.concurrent.CompletableFuture;
 
 
 
-public class AptoBridge {
+public class AppCoinsAdapter {
     private static String MSG_INITIAL_RESULT = "InitialResult";
     private static String MSG_CONNECTION_LOST = "ConnectionLost";
     private static String MSG_PRODUCTS_GET_RESULT = "ProductsGetResult";
@@ -41,7 +41,7 @@ public class AptoBridge {
     private static String MSG_PRODUCTS_CONSUME_RESULT = "ProductsConsumeResult";
     private static String MSG_QUERY_PURCHASES_RESULT = "QueryPurchasesResult";
 
-    private static String LOG_TAG = "[AptoBridge]";
+    private static String LOG_TAG = "[AppCoinsAdapter]";
 
     private static Activity activity;
     private static String unityClassName = "SDKLogic";
@@ -316,11 +316,11 @@ public class AptoBridge {
                         developerPayload,
                         "BDS"
                 );
-
+        
+        final int responseCode = cab.launchBillingFlow(activity, billingFlowParams);
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                final int responseCode = cab.launchBillingFlow(activity, billingFlowParams);
                 JSONObject jsonObject = new JSONObject();
                 try {
                     jsonObject.put("msg", MSG_LAUNCH_BILLING_RESULT);
@@ -494,9 +494,9 @@ public class AptoBridge {
 
 
     public static String GetPrice(String sku) {
-        AptoLog("SKU GetPrice AptoBridge: " + sku );
-        AptoLog("attempts GetPrice AptoBridge: " + _attemptsPrice );
-        AptoLog("gold Dice GetPrice AptoBridge: " + _goldDicePrice );
+        AptoLog("SKU GetPrice AppCoinsAdapter: " + sku );
+        AptoLog("attempts GetPrice AppCoinsAdapter: " + _attemptsPrice );
+        AptoLog("gold Dice GetPrice AppCoinsAdapter: " + _goldDicePrice );
         
         if (sku.equals("attempts")) {
             return _attemptsPrice;

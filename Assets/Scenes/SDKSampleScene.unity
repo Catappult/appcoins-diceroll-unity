@@ -2305,8 +2305,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 962687195}
-        m_TargetAssemblyTypeName: AptoPurchaseManager, Assembly-CSharp
+      - m_Target: {fileID: 962687194}
+        m_TargetAssemblyTypeName: UnityAppCoinsSDK.AptoPurchaseManager, Assembly-CSharp
         m_MethodName: StartSubscription
         m_Mode: 1
         m_Arguments:
@@ -2365,7 +2365,7 @@ GameObject:
   m_Component:
   - component: {fileID: 962687193}
   - component: {fileID: 962687192}
-  - component: {fileID: 962687195}
+  - component: {fileID: 962687194}
   m_Layer: 0
   m_Name: Logic
   m_TagString: Untagged
@@ -2393,7 +2393,7 @@ MonoBehaviour:
   _txtAttempts: {fileID: 410573026}
   _numberInput: {fileID: 1047009966}
   _txtResult: {fileID: 1121377665}
-  _aptoPurchaseManager: {fileID: 962687195}
+  _aptoPurchaseManager: {fileID: 962687194}
 --- !u!4 &962687193
 Transform:
   m_ObjectHideFlags: 0
@@ -2409,7 +2409,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &962687195
+--- !u!114 &962687194
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2418,12 +2418,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 962687191}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1c5213617b67ade4e8624eed895b5335, type: 3}
+  m_Script: {fileID: 11500000, guid: d28d5e43bd9034b4e9b2389e59c15470, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   publicKey: 
-  sku: attempts;golden_dice
-  developerPayload: Teste
+  sku: attempts;golden_dice;
+  developerPayload: Test
 --- !u!1 &1029791373
 GameObject:
   m_ObjectHideFlags: 0
@@ -4097,8 +4097,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 962687195}
-        m_TargetAssemblyTypeName: PurchaseManager, Assembly-CSharp
+      - m_Target: {fileID: 962687194}
+        m_TargetAssemblyTypeName: UnityAppCoinsSDK.AptoPurchaseManager, Assembly-CSharp
         m_MethodName: StartPurchase
         m_Mode: 1
         m_Arguments:

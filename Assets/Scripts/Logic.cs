@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityAppCoinsSDK;
 
 public class Logic : MonoBehaviour
 {
