@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityAppCoinsSDK;
 
 public class Logic : MonoBehaviour
 {
@@ -15,41 +17,132 @@ public class Logic : MonoBehaviour
     [SerializeField]
     private Button _btnRoll;
     [SerializeField]
+    private Button _btnBuySDK;
+    [SerializeField]
+    private Button _btnSubsSDK;
+    [SerializeField]
     private TMP_Text _txtAttempts;
     [SerializeField]
     private TMP_InputField _numberInput;
     [SerializeField]
     private TMP_Text _txtResult;
+    
     [SerializeField]
     private AptoPurchaseManager _aptoPurchaseManager;
 
 
     private int _currentAttempts = 0;
     private int _answer;
+    bool hasLoggedInitialization;
+    
+    bool  isGoldenDice = false;
+    bool hasWallet = false;
+
+    private const string WalletPackageName = "com.appcoins.wallet";
+
     
 
     void Awake()
-    {
+    {   
+
+        UpdateAttempts(_startingAttempts);
+
+        hasLoggedInitialization = false;
+
+
         if (PlayerPrefs.HasKey(ATTEMPTS_KEY))
             _currentAttempts = PlayerPrefs.GetInt(ATTEMPTS_KEY, 0);
         else
         {
             _currentAttempts = _startingAttempts;
         }
+
+        if(_currentAttempts == _startingAttempts)
+        {
+            
+            _btnBuySDK.interactable = false;
+            TMP_Text textComponentBuy = _btnBuySDK.GetComponentInChildren<TMP_Text>();
+            textComponentBuy.color = Color.white;
+            _btnSubsSDK.interactable = false;
+            TMP_Text textComponentSub = _btnSubsSDK.GetComponentInChildren<TMP_Text>();
+            textComponentSub.color = Color.white;
+            
+
+        }
+
+
         UpdateAttempts(_currentAttempts);
+
+
+    }
+
+    private string ExtractNumbers(string input)
+    {
+        // Define a regex pattern to match numbers (including decimal points)
+        string pattern = @"\d+(\.\d+)?";
+        Match match = Regex.Match(input, pattern);
+        return match.Value;
     }
 
     void Update()
     {
+        bool isCabInitialized = _aptoPurchaseManager.isCabInitialized();
+
+        Debug.LogError("3Golden Dice Active " + _aptoPurchaseManager.IsGoldenDiceSubsActive());
+            
+        if(_aptoPurchaseManager.IsGoldenDiceSubsActive()){
+            isGoldenDice = true;
+            setGoldenDice();
+        }
+        
+
+        
         if(_aptoPurchaseManager.ValidateLastPurchase())
         {
             UpdateAttempts(_startingAttempts);
-            Debug.LogError("Bought attempts.");
+            Debug.Log("Bought attempts.");
         }
+
+        if(_aptoPurchaseManager.ValidateLastSubsPurchase())
+        {
+            UpdateAttempts(_startingAttempts);
+            // Convert hex color #a87d05 to Color
+            setGoldenDice();
+            isGoldenDice = true;
+        }
+
+
+        if(_currentAttempts < _startingAttempts)
+        {
+            string priceAtt = _aptoPurchaseManager.getAttemptPrice();
+            string priceSub = _aptoPurchaseManager.getSubsPrice();
+            
+            if(priceAtt != null){
+                Debug.Log("Teste Call inapp" + priceAtt );
+                _btnBuySDK.interactable = true;
+                TMP_Text textComponentBuy = _btnBuySDK.GetComponentInChildren<TMP_Text>();
+                textComponentBuy.text = "Buy Attempts: " + priceAtt;
+            }
+
+
+
+            if(priceSub != null){
+                if(!isGoldenDice){
+                    Debug.Log("Teste Call subs" + priceSub );
+                    _btnSubsSDK.interactable = true;
+                    TMP_Text textComponentSubs = _btnSubsSDK.GetComponentInChildren<TMP_Text>();
+                    textComponentSubs.text = "Buy Subs: " + priceSub;
+                }
+            }
+
+        }
+
+        
     }
 
     public void OnRollDicePressed()
     {
+
         if (_currentAttempts <= 0)
         {
             Debug.LogError("Trying to roll without attempts, bailing...");
@@ -67,9 +160,58 @@ public class Logic : MonoBehaviour
         VerifyAnswerForDiceValue(diceValue);
     }
 
+    private void setGoldenDice()
+    {
+
+        Color diceColor = new Color(168f / 255f, 125f / 255f, 5f / 255f);
+        _dice.GetComponent<Image>().color = diceColor;
+        Debug.Log("Bought attempts and Got Golden Dice.");
+
+
+        // Assuming _dice is the parent GameObject
+        UIDice parentDice = _dice;
+
+        int i = 1;
+
+        while(i<6){
+            // Find the child GameObject by name
+            Transform childTransform = parentDice.transform.Find(i.ToString());
+            if (childTransform != null)
+            { 
+                GameObject childGameObject = childTransform.gameObject;
+                Debug.Log("IDENTIFIED CHILD GAME OBJECT + " + childGameObject.name);
+
+                
+
+                // Get the Transform component of childGameObject
+                Transform childTransformm = childGameObject.transform;
+
+                // Loop through each child
+                foreach (Transform child in childTransformm)
+                {
+                    // Do something with each child
+                    Debug.Log("HERE : " + child.name);
+                    Color diceColor_ = new Color(168f / 255f, 125f / 255f, 5f / 255f);
+                    child.GetComponent<Image>().color = diceColor_;
+                }                    
+            }
+            else
+            {
+                Debug.LogError("Child GameObject not found.");
+            }
+
+            i++;
+        }
+    
+
+    }
+
     private void VerifyAnswerForDiceValue(int diceValue)
     {
         StartCoroutine(DisplayResult(_answer == diceValue ? "Correct" : "Incorrect"));
+        if(_answer == diceValue){
+            UpdateAttempts(_startingAttempts);
+        }
     }
 
     IEnumerator DisplayResult(string result)
