@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
 using System.Reflection;
+using UnityEngine.Networking;
 
 namespace UnityAppCoinsSDK
 {
@@ -170,10 +171,20 @@ namespace UnityAppCoinsSDK
                     }
                     else
                     {
-                        Debug.LogError("Made the purchase sucesfully.");
+                        Debug.Log("Made the purchase sucesfully.");
 
 
+                        //As it makes successful purchase here delivers the item and performs serverside check to then be able to consume the purchase
+                        // As it makes a successful purchase here, validate the purchase via the server before consuming it
                         foreach (Purchase purchase in purchaseData.purchases)
+                        {
+                            Debug.Log("Made the purchase sucesfully. Token: " + purchase.token);
+                            StartCoroutine(ValidateAndConsumePurchase(purchase));
+                        }
+
+
+
+                        /**foreach (Purchase purchase in purchaseData.purchases)
                         {
 
                             appCoinsAdapterClass.CallStatic("ProductsStartConsume", purchase.token);
@@ -185,7 +196,7 @@ namespace UnityAppCoinsSDK
                                 Debug.Log("Item purchased.");
                                 lastPurchaseCheck = true;
                             }
-                        }
+                        }**/
 
                     }
                     break;
@@ -277,5 +288,64 @@ namespace UnityAppCoinsSDK
             
             return isGoldenDiceSubsActive;
         }
+
+
+        private IEnumerator ValidateAndConsumePurchase(Purchase purchase)
+        {
+            Debug.Log("Validate and Consume");
+            string url = $"https://sdk.diceroll.catappult.io/validate/{purchase.packageName}/{purchase.sku}/{purchase.token}";
+            using (UnityWebRequest webRequest = UnityWebRequest.Get(url))
+            {
+                // Send the request and wait for a response
+                yield return webRequest.SendWebRequest();
+
+                if (webRequest.result == UnityWebRequest.Result.ConnectionError || webRequest.result == UnityWebRequest.Result.ProtocolError)
+                {
+                    Debug.LogError($"Validation failed for purchase: {purchase.sku}. Error: {webRequest.error}");
+                }
+                else
+                {
+                    // Parse the response
+                    string responseText = webRequest.downloadHandler.text.Trim();
+                    Debug.Log($"Validation response for {purchase.sku}: {responseText}");
+
+                    // Check if the response is "true" or "false"
+                    if (responseText == "true")
+                    {
+                        Debug.Log($"Purchase validated successfully for {purchase.sku}. Consuming the purchase...");
+                        appCoinsAdapterClass.CallStatic("ProductsStartConsume", purchase.token);
+
+                        if (purchase.itemType == "subs")
+                        {
+                            Debug.Log("Subscription purchased.");
+                            lastSubscriptionCheck = true;
+                        }
+                        else
+                        {
+                            Debug.Log("Item purchased.");
+                            lastPurchaseCheck = true;
+                        }
+                    }
+                    else if (responseText == "false")
+                    {
+                        Debug.LogError($"Purchase validation failed for {purchase.sku}.");
+                    }
+                    else
+                    {
+                        Debug.LogError($"Unexpected response for purchase validation: {responseText}");
+                    }
+                }
+            }
+        }
+
+        // Helper class to parse the validation response
+        [System.Serializable]
+        private class ValidationResponse
+        {
+            public bool valid;
+        }
+
+
     }
+
 }
