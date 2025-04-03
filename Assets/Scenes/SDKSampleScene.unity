@@ -2421,9 +2421,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9551733b3ae743d4810279f50483b2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  publicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzIR0OxCJDzaF2PvcymkPvG9PQTCVkGPxG5eLt5ZcIBftWKl6nFmgItAyYm2ixOrpNUOHjtuTOXuaMMABV91Y6CitQujsr0O76PsHduY0jG2j32wJAIluzspkzKS6sBp4MZvfG/ctUaqjDibYuvRZtE3Wv7kY7zH/lwKmD+BnGScFc8YTJUOlcRdqXtIPbX9Je2h5PtLUNmiLzcnjKxJ7dwsSc/QEuVXSY7k/jFkjIsv62EaLEcMtJrbuL+jvLg6/MpK2REuinLrkG9xK2JjgK9xhW6D7pEvQb/Dj3YFk0RbaP7EITsnrQaqZ1pL9aAEDzeG3qcsJSU2cn/wfGgZodwIDAQAB
-  sku: attempts;golden_dice
-  developerPayload: teste
+  publicKey: INSERT HERE
+  sku: INSERT HERE
+  developerPayload: INSERT HERE
+  logic: {fileID: 0}
+  serverSideCheck: 0
 --- !u!1 &1029791373
 GameObject:
   m_ObjectHideFlags: 0

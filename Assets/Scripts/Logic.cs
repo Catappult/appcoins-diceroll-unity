@@ -5,6 +5,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using UnityAppCoinsSDK;
+using UnityEngine.Networking;
 
 public class Logic : MonoBehaviour
 {
@@ -88,6 +89,32 @@ public class Logic : MonoBehaviour
     {
         bool isCabInitialized = _aptoPurchaseManager.isCabInitialized();
 
+
+
+        if (_aptoPurchaseManager.serverSideCheck)
+        {
+            // Get the purchases data
+            var purchases = _aptoPurchaseManager.PurchasesAll; 
+            if (purchases != null)
+            {
+                foreach (var purchase in purchases)
+                {
+                    Debug.Log($"Purchase: {purchase}");
+
+                    // Start the validation coroutine for each purchase
+                    StartCoroutine(ValidatePurchase(purchase));   
+                }
+            }
+            else
+            {
+                Debug.LogWarning("No purchases found.");
+            }
+
+            // Validate server-side check
+            // Calls consume purchase if OK
+            //_aptoPurchaseManager.consumePurchase();
+        }
+
         Debug.LogError("3Golden Dice Active " + _aptoPurchaseManager.IsGoldenDiceSubsActive());
             
         if(_aptoPurchaseManager.IsGoldenDiceSubsActive()){
@@ -97,7 +124,7 @@ public class Logic : MonoBehaviour
         
 
         
-        if(_aptoPurchaseManager.ValidateLastPurchase())
+        /**if(_aptoPurchaseManager.ValidateLastPurchase())
         {
             UpdateAttempts(_startingAttempts);
             Debug.Log("Bought attempts.");
@@ -109,7 +136,7 @@ public class Logic : MonoBehaviour
             // Convert hex color #a87d05 to Color
             setGoldenDice();
             isGoldenDice = true;
-        }
+        }**/
 
 
         if(_currentAttempts < _startingAttempts)
@@ -250,4 +277,54 @@ public class Logic : MonoBehaviour
         PlayerPrefs.SetInt(ATTEMPTS_KEY, _currentAttempts);
         _txtAttempts.text = _currentAttempts.ToString();
     }
+
+    private IEnumerator ValidatePurchase(Purchase purchase)
+    {
+        string url = $"https://sdk.diceroll.catappult.io/validate/{purchase.packageName}/{purchase.sku}/{purchase.token}";
+        using (UnityWebRequest webRequest = UnityWebRequest.Get(url))
+        {
+            // Send the request and wait for a response
+            yield return webRequest.SendWebRequest();
+
+            if (webRequest.result == UnityWebRequest.Result.ConnectionError || webRequest.result == UnityWebRequest.Result.ProtocolError)
+            {
+                Debug.LogError($"Validation failed for purchase: {purchase.sku}. Error: {webRequest.error}");
+            }
+            else
+            {
+                // Parse the response
+                string responseText = webRequest.downloadHandler.text.Trim();
+                Debug.Log($"Validation response for {purchase.sku}: {responseText}");
+
+                // Check if the response is "true" or "false"
+                if (responseText == "true")
+                {
+                    Debug.Log($"Purchase validated successfully for {purchase.sku}. Consuming the purchase...");
+                    _aptoPurchaseManager.consumePurchase(purchase.token);
+
+                    if (purchase.itemType == "subs")
+                    {
+                        Debug.Log("Subscription purchased.");
+                        isGoldenDice = true;
+                        setGoldenDice();
+                    }
+                    else
+                    {
+                        Debug.Log("Item purchased.");
+                        UpdateAttempts(_startingAttempts);
+                    }
+                }
+                else if (responseText == "false")
+                {
+                    Debug.LogError($"Purchase validation failed for {purchase.sku}.");
+                }
+                else
+                {
+                    Debug.LogError($"Unexpected response for purchase validation: {responseText}");
+                }
+            }
+        }
+    }
+
+
 }
