@@ -51,7 +51,14 @@ public class Logic : MonoBehaviour,
 
         
 
-        AptoideBillingSDKManager.InitializePlugin(this, this, this, this, "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzIR0OxCJDzaF2PvcymkPvG9PQTCVkGPxG5eLt5ZcIBftWKl6nFmgItAyYm2ixOrpNUOHjtuTOXuaMMABV91Y6CitQujsr0O76PsHduY0jG2j32wJAIluzspkzKS6sBp4MZvfG/ctUaqjDibYuvRZtE3Wv7kY7zH/lwKmD+BnGScFc8YTJUOlcRdqXtIPbX9Je2h5PtLUNmiLzcnjKxJ7dwsSc/QEuVXSY7k/jFkjIsv62EaLEcMtJrbuL+jvLg6/MpK2REuinLrkG9xK2JjgK9xhW6D7pEvQb/Dj3YFk0RbaP7EITsnrQaqZ1pL9aAEDzeG3qcsJSU2cn/wfGgZodwIDAQAB", this.gameObject.name);
+        AptoideBillingSDKManager.InitializePlugin(
+            this,
+            this,
+            this, 
+            this, 
+            "INSERT HERE API KEY", 
+            this.gameObject.name);
+
         
     }
 
@@ -136,6 +143,8 @@ public class Logic : MonoBehaviour,
                     {
                         Debug.Log("Subscription purchased.");
                         
+                        setGoldenDice();    
+                        
                     }
                     else
                     {
@@ -155,6 +164,39 @@ public class Logic : MonoBehaviour,
         }
     }
 
+    private void setGoldenDice()
+    {
+        Color diceColor = new Color(168f / 255f, 125f / 255f, 5f / 255f);
+        _dice.GetComponent<Image>().color = diceColor;
+        
+        // Assuming _dice is the parent GameObject
+        UIDice parentDice = _dice;
+
+        int i = 1;
+        while(i<6){
+            // Find the child GameObject by name
+            Transform childTransform = parentDice.transform.Find(i.ToString());
+            if (childTransform != null)
+            { 
+                GameObject childGameObject = childTransform.gameObject;
+                
+                // Get the Transform component of childGameObject
+                Transform childTransformm = childGameObject.transform;
+
+                // Loop through each child
+                foreach (Transform child in childTransformm)
+                {
+                    Color diceColor_ = new Color(168f / 255f, 125f / 255f, 5f / 255f);
+                    child.GetComponent<Image>().color = diceColor_;
+                }                    
+            }
+            else
+            {
+                Debug.LogError("Child GameObject not found.");
+            }
+            i++;
+        }
+    }
 
 
 
@@ -196,6 +238,21 @@ public class Logic : MonoBehaviour,
         
         if (responseCode == 0) // Assuming 0 indicates success
         {
+            // Check if subscriptions are supported
+            if (AptoideBillingSDKManager.IsFeatureSupported("SUBSCRIPTIONS")==0)
+            {
+                Debug.Log("Subscriptions are supported.");
+                AptoideBillingSDKManager.QuerySkuDetailsAsync(subsSkus, "subs");
+            }
+            else
+            {
+                Debug.LogWarning("Subscriptions are not supported on this device.");
+            }
+
+            // Query purchases for both in-app and subscription products
+            AptoideBillingSDKManager.QueryPurchases("inapp");
+            AptoideBillingSDKManager.QueryPurchases("subs");
+
             AptoideBillingSDKManager.QuerySkuDetailsAsync(inappSkus, "inapp");
             AptoideBillingSDKManager.QuerySkuDetailsAsync(subsSkus, "subs");
         }
@@ -235,7 +292,6 @@ public class Logic : MonoBehaviour,
 
     public void OnSkuDetailsResponse(int responseCode, SkuDetails[] skuDetailsList)
     {
-        Debug.Log($"LOGIC SKU Details Response: {responseCode}");
         if (responseCode == 0) // Assuming 0 indicates success
         {
             foreach (var skuDetails in skuDetailsList)
