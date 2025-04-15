@@ -1,18 +1,15 @@
 using UnityEngine;
 
-namespace IntegrationPlugin
+public class UidManager : MonoBehaviour
 {
-    public class UidManager : MonoBehaviour
+    public static string ReceiveString(string value)
     {
-        public static string ReceiveString(string value)
+        /**OSPButton[] buttons = FindObjectsOfType<OSPButton>();
+        foreach (OSPButton button in buttons)
         {
-            OSPButton[] buttons = FindObjectsOfType<OSPButton>();
-            foreach (OSPButton button in buttons)
-            {
-                button.SetUserId(value);
-            }
-            return "UID " + value + " set";
+            button.SetUserId(value);
         }
+        return "UID " + value + " set";**/
+        return "UID "+ value +" set";
     }
 }
-

@@ -1,14 +1,13 @@
 {
   "dependencies": {
     "com.aptoide.unityappcoinssdk": {
-      "version": "https://github.com/Catappult/appcoins-sdk-unity.git#v0.9.0.7",
+      "version": "git@github.com:Catappult/appcoins-sdk-unity.git",
       "depth": 0,
       "source": "git",
       "dependencies": {
-        "com.unity.textmeshpro": "3.0.6",
         "com.unity.mobile.android-logcat": "1.3.2"
       },
-      "hash": "0f4fec309c0b4353b2c63e1d0a59b51192fbb31d"
+      "hash": "211669979fbe2b290009cb876dfee60f251678fb"
     },
     "com.unity.collab-proxy": {
       "version": "2.0.0",
@@ -51,7 +50,7 @@
     },
     "com.unity.mobile.android-logcat": {
       "version": "1.3.2",
-      "depth": 0,
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"

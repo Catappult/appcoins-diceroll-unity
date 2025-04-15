@@ -4,13 +4,15 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-using UnityAppCoinsSDK;
 using UnityEngine.Networking;
+using UnityAppCoinsSDK;
 
-public class Logic : MonoBehaviour
+public class Logic : MonoBehaviour, 
+                    IAppCoinsBillingStateListener, 
+                    IConsumeResponseListener, 
+                    IPurchasesUpdatedListener, 
+                    ISkuDetailsResponseListener
 {
-    public const string ATTEMPTS_KEY = "Attempts";
-
     [SerializeField]
     private int _startingAttempts = 3;
     [SerializeField]
@@ -27,253 +29,78 @@ public class Logic : MonoBehaviour
     private TMP_InputField _numberInput;
     [SerializeField]
     private TMP_Text _txtResult;
-    
-    [SerializeField]
-    private AptoPurchaseManager _aptoPurchaseManager;
 
-
+    public const string ATTEMPTS_KEY = "Attempts";
     private int _currentAttempts = 0;
-    private int _answer;
-    bool hasLoggedInitialization;
-    
-    bool  isGoldenDice = false;
-    bool hasWallet = false;
-
-    private const string WalletPackageName = "com.appcoins.wallet";
-
-    
-
-    void Awake()
-    {   
-
-        UpdateAttempts(_startingAttempts);
-
-        hasLoggedInitialization = false;
 
 
+    // Start is called before the first frame update
+    void Start()
+    {
         if (PlayerPrefs.HasKey(ATTEMPTS_KEY))
             _currentAttempts = PlayerPrefs.GetInt(ATTEMPTS_KEY, 0);
         else
-        {
             _currentAttempts = _startingAttempts;
-        }
 
-        if(_currentAttempts == _startingAttempts)
-        {
-            
-            _btnBuySDK.interactable = false;
-            TMP_Text textComponentBuy = _btnBuySDK.GetComponentInChildren<TMP_Text>();
-            textComponentBuy.color = Color.white;
-            _btnSubsSDK.interactable = false;
-            TMP_Text textComponentSub = _btnSubsSDK.GetComponentInChildren<TMP_Text>();
-            textComponentSub.color = Color.white;
-            
+        UpdateAttemptsUI();
 
-        }
+        _btnRoll.onClick.AddListener(OnRollDicePressed);
+        _btnBuySDK.onClick.AddListener(OnBuySDKPressed);
+        _btnSubsSDK.onClick.AddListener(OnSubsSDKPressed);
 
-
-        UpdateAttempts(_currentAttempts);
-
-
+        AptoideBillingSDKManager.InitializePlugin(this, this, this, this, "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzIR0OxCJDzaF2PvcymkPvG9PQTCVkGPxG5eLt5ZcIBftWKl6nFmgItAyYm2ixOrpNUOHjtuTOXuaMMABV91Y6CitQujsr0O76PsHduY0jG2j32wJAIluzspkzKS6sBp4MZvfG/ctUaqjDibYuvRZtE3Wv7kY7zH/lwKmD+BnGScFc8YTJUOlcRdqXtIPbX9Je2h5PtLUNmiLzcnjKxJ7dwsSc/QEuVXSY7k/jFkjIsv62EaLEcMtJrbuL+jvLg6/MpK2REuinLrkG9xK2JjgK9xhW6D7pEvQb/Dj3YFk0RbaP7EITsnrQaqZ1pL9aAEDzeG3qcsJSU2cn/wfGgZodwIDAQAB", this.gameObject.name);
+        AptoideBillingSDKManager.QuerySkuDetailsAsync(new string[] { "attempts" }, "inapp");
+        AptoideBillingSDKManager.QuerySkuDetailsAsync(new string[] { "golden_dice" }, "subs");
     }
 
-    private string ExtractNumbers(string input)
-    {
-        // Define a regex pattern to match numbers (including decimal points)
-        string pattern = @"\d+(\.\d+)?";
-        Match match = Regex.Match(input, pattern);
-        return match.Value;
-    }
-
+    // Update is called once per frame
     void Update()
     {
-        bool isCabInitialized = _aptoPurchaseManager.isCabInitialized();
+        
+    }
 
-
-
-        if (_aptoPurchaseManager.serverSideCheck)
+    private void OnRollDicePressed()
+    {
+        if (_currentAttempts > 0)
         {
-            // Get the purchases data
-            var purchases = _aptoPurchaseManager.PurchasesAll; 
-            if (purchases != null)
+            _currentAttempts--;
+            UpdateAttemptsUI();
+
+            int diceValue = Random.Range(1, 7); // Generate a random number between 1 and 6
+            _dice.SetValue(diceValue); // Assuming _dice.SetValue updates the dice face
+
+            // Check if the input number matches the dice value
+            if (int.TryParse(_numberInput.text, out int inputNumber) && inputNumber == diceValue)
             {
-                foreach (var purchase in purchases)
-                {
-                    Debug.Log($"Purchase: {purchase}");
-
-                    // Start the validation coroutine for each purchase
-                    StartCoroutine(ValidatePurchase(purchase));   
-                }
+                _currentAttempts = _startingAttempts; // Reset attempts
+                UpdateAttemptsUI();
+                ShowToast("Correct");
             }
-            else
+            else if (_currentAttempts == 0)
             {
-                Debug.LogWarning("No purchases found.");
+                ShowToast("No more attempts, purchase now.");
             }
-
-            // Validate server-side check
-            // Calls consume purchase if OK
-            //_aptoPurchaseManager.consumePurchase();
         }
-
-        Debug.LogError("3Golden Dice Active " + _aptoPurchaseManager.IsGoldenDiceSubsActive());
-            
-        if(_aptoPurchaseManager.IsGoldenDiceSubsActive()){
-            isGoldenDice = true;
-            setGoldenDice();
-        }
-        
-
-        
-        /**if(_aptoPurchaseManager.ValidateLastPurchase())
+        else
         {
-            UpdateAttempts(_startingAttempts);
-            Debug.Log("Bought attempts.");
-        }
-
-        if(_aptoPurchaseManager.ValidateLastSubsPurchase())
-        {
-            UpdateAttempts(_startingAttempts);
-            // Convert hex color #a87d05 to Color
-            setGoldenDice();
-            isGoldenDice = true;
-        }**/
-
-
-        if(_currentAttempts < _startingAttempts)
-        {
-            string priceAtt = _aptoPurchaseManager.getAttemptPrice();
-            string priceSub = _aptoPurchaseManager.getSubsPrice();
-            
-            if(priceAtt != null){
-                Debug.Log("Teste Call inapp" + priceAtt );
-                _btnBuySDK.interactable = true;
-                TMP_Text textComponentBuy = _btnBuySDK.GetComponentInChildren<TMP_Text>();
-                textComponentBuy.text = "Buy Attempts: " + priceAtt;
-            }
-
-
-
-            if(priceSub != null){
-                if(!isGoldenDice){
-                    Debug.Log("Teste Call subs" + priceSub );
-                    _btnSubsSDK.interactable = true;
-                    TMP_Text textComponentSubs = _btnSubsSDK.GetComponentInChildren<TMP_Text>();
-                    textComponentSubs.text = "Buy Subs: " + priceSub;
-                }
-            }
-
-        }
-
-        
-    }
-
-    public void OnRollDicePressed()
-    {
-
-        if (_currentAttempts <= 0)
-        {
-            Debug.LogError("Trying to roll without attempts, bailing...");
-            return;
-        }
-
-        //Sanity keeping
-        _txtResult.gameObject.SetActive(false);
-
-        UpdateAttempts(_currentAttempts - 1);
-
-        int diceValue = Random.Range(1, 7); //Max exclusive
-        _dice.SetValue(diceValue);
-
-        VerifyAnswerForDiceValue(diceValue);
-    }
-
-    private void setGoldenDice()
-    {
-
-        Color diceColor = new Color(168f / 255f, 125f / 255f, 5f / 255f);
-        _dice.GetComponent<Image>().color = diceColor;
-        Debug.Log("Bought attempts and Got Golden Dice.");
-
-
-        // Assuming _dice is the parent GameObject
-        UIDice parentDice = _dice;
-
-        int i = 1;
-
-        while(i<6){
-            // Find the child GameObject by name
-            Transform childTransform = parentDice.transform.Find(i.ToString());
-            if (childTransform != null)
-            { 
-                GameObject childGameObject = childTransform.gameObject;
-                Debug.Log("IDENTIFIED CHILD GAME OBJECT + " + childGameObject.name);
-
-                
-
-                // Get the Transform component of childGameObject
-                Transform childTransformm = childGameObject.transform;
-
-                // Loop through each child
-                foreach (Transform child in childTransformm)
-                {
-                    // Do something with each child
-                    Debug.Log("HERE : " + child.name);
-                    Color diceColor_ = new Color(168f / 255f, 125f / 255f, 5f / 255f);
-                    child.GetComponent<Image>().color = diceColor_;
-                }                    
-            }
-            else
-            {
-                Debug.LogError("Child GameObject not found.");
-            }
-
-            i++;
-        }
-    
-
-    }
-
-    private void VerifyAnswerForDiceValue(int diceValue)
-    {
-        StartCoroutine(DisplayResult(_answer == diceValue ? "Correct" : "Incorrect"));
-        if(_answer == diceValue){
-            UpdateAttempts(_startingAttempts);
+            ShowToast("No more attempts, purchase now.");
         }
     }
 
-    IEnumerator DisplayResult(string result)
+    private void OnBuySDKPressed()
     {
-        _txtResult.text = result;
-        _txtResult.gameObject.SetActive(true);
-        yield return new WaitForSeconds(0.5f);
-        _txtResult.gameObject.SetActive(false);
+        ShowToast("Buy inapp purchase.");
+        AptoideBillingSDKManager.LaunchBillingFlow("attempts", "inapp", "developerPayload");
     }
 
-    public void OnTextChanged(string text)
+    private void OnSubsSDKPressed()
     {
-        _answer = int.Parse(_numberInput.text);
-
-        _btnRoll.enabled = _currentAttempts > 0 && _answer > 0;
+        ShowToast("Subscribe SDK button pressed.");
+        AptoideBillingSDKManager.LaunchBillingFlow("golden_dice", "subs", "developerPayload");
     }
 
-    public void OnOSPBuyAttempts()
+    private void UpdateAttemptsUI()
     {
-        
-    }
-
-    public void OnSDKBuyAttempts()
-    {
-        
-    }
-
-    private void OnBuyAttemptsReturned()
-    {
-        UpdateAttempts(_currentAttempts + _startingAttempts);
-    }
-
-    public void UpdateAttempts(int val)
-    {
-        _currentAttempts = val;
         PlayerPrefs.SetInt(ATTEMPTS_KEY, _currentAttempts);
         _txtAttempts.text = _currentAttempts.ToString();
     }
@@ -300,18 +127,18 @@ public class Logic : MonoBehaviour
                 if (responseText == "true")
                 {
                     Debug.Log($"Purchase validated successfully for {purchase.sku}. Consuming the purchase...");
-                    _aptoPurchaseManager.consumePurchase(purchase.token);
+                    _currentAttempts = _startingAttempts; 
+                    AptoideBillingSDKManager.ConsumeAsync(purchase.token);
 
                     if (purchase.itemType == "subs")
                     {
                         Debug.Log("Subscription purchased.");
-                        isGoldenDice = true;
-                        setGoldenDice();
+                        
                     }
                     else
                     {
                         Debug.Log("Item purchased.");
-                        UpdateAttempts(_startingAttempts);
+                        UpdateAttemptsUI();
                     }
                 }
                 else if (responseText == "false")
@@ -324,6 +151,116 @@ public class Logic : MonoBehaviour
                 }
             }
         }
+    }
+
+
+
+
+
+
+
+
+    private void ShowToast(string message)
+    {
+    #if UNITY_ANDROID && !UNITY_EDITOR
+        using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+        {
+            AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+            if (currentActivity != null)
+            {
+                AndroidJavaClass toastClass = new AndroidJavaClass("android.widget.Toast");
+                currentActivity.Call("runOnUiThread", new AndroidJavaRunnable(() =>
+                {
+                    AndroidJavaObject toast = toastClass.CallStatic<AndroidJavaObject>(
+                        "makeText", 
+                        currentActivity, 
+                        message, 
+                        toastClass.GetStatic<int>("LENGTH_SHORT")
+                    );
+                    toast.Call("show");
+                }));
+            }
+        }
+    #else
+        Debug.Log($"Toast: {message}");
+    #endif
+    }
+
+
+    //Implement Listeners
+
+    public void OnBillingSetupFinished(int responseCode)
+    {
+        if (responseCode == 0) // Assuming 0 indicates success
+        {
+            Debug.Log("Billing setup finished successfully.");
+        }
+        else
+        {
+            Debug.LogError($"Billing setup failed with response code: {responseCode}");
+        }
+    }
+
+    public void OnConsumeResponse(int responseCode, string purchaseToken)
+    {
+        if (responseCode == 0) // Assuming 0 indicates success
+        {
+            Debug.Log($"Purchase with token {purchaseToken} consumed successfully.");
+        }
+        else
+        {
+            Debug.LogError($"Failed to consume purchase with token {purchaseToken}. Response code: {responseCode}");
+        }
+    }
+
+    public void OnPurchasesUpdated(int responseCode, List<Purchase> purchases)
+    {
+        if (responseCode == 0) // Assuming 0 indicates success
+        {
+            foreach (var purchase in purchases)
+            {
+                Debug.Log($"Purchase updated: {purchase.sku}");
+                StartCoroutine(ValidatePurchase(purchase));
+            }
+        }
+        else
+        {
+            Debug.LogError($"Failed to update purchases. Response code: {responseCode}");
+        }
+    }
+
+    public void OnSkuDetailsResponse(int responseCode, List<SkuDetails> skuDetailsList)
+    {
+        Debug.Log($"LOGIC SKU Details Response: {responseCode}");
+        if (responseCode == 0) // Assuming 0 indicates success
+        {
+            foreach (var skuDetails in skuDetailsList)
+            {
+                Debug.Log($"SKU Details received: {skuDetails.sku}");
+                if(skuDetails.sku == "attempts")
+                {
+                    Debug.Log($"Price for attempts: {skuDetails.price}");
+                    // Update the UI or perform any action with the SKU details
+                    _btnBuySDK.GetComponentInChildren<TMP_Text>().text = "Buy Attempts: " + skuDetails.price; 
+                }
+                else if(skuDetails.sku == "golden_dice")
+                {
+                    Debug.Log($"Price for golden dice subscription: {skuDetails.price}");
+                    // Update the UI or perform any action with the SKU details
+                    _btnSubsSDK.GetComponentInChildren<TMP_Text>().text = "Buy Subs: " + skuDetails.price;
+                }
+            }
+        }
+        else
+        {
+            Debug.LogError($"Failed to receive SKU details. Response code: {responseCode}");
+        }
+    }
+
+        
+    public void OnBillingServiceDisconnected()
+    {
+        Debug.LogError("Billing service disconnected.");
     }
 
 
