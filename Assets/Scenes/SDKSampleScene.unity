@@ -2408,7 +2408,6 @@ MonoBehaviour:
   _txtAttempts: {fileID: 410573026}
   _numberInput: {fileID: 1047009966}
   _txtResult: {fileID: 1121377665}
-  _aptoideBillingSDKManager: {fileID: 962687196}
 --- !u!114 &962687196
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -5,7 +5,6 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.Networking;
-using UnityAppCoinsSDK;
 
 public class Logic : MonoBehaviour, 
                     IAppCoinsBillingStateListener, 
@@ -33,6 +32,8 @@ public class Logic : MonoBehaviour,
     public const string ATTEMPTS_KEY = "Attempts";
     private int _currentAttempts = 0;
 
+    private static string[] inappSkus = new string[] { "attempts" };
+    private static string[] subsSkus = new string[] { "golden_dice" };
 
     // Start is called before the first frame update
     void Start()
@@ -48,9 +49,10 @@ public class Logic : MonoBehaviour,
         _btnBuySDK.onClick.AddListener(OnBuySDKPressed);
         _btnSubsSDK.onClick.AddListener(OnSubsSDKPressed);
 
+        
+
         AptoideBillingSDKManager.InitializePlugin(this, this, this, this, "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzIR0OxCJDzaF2PvcymkPvG9PQTCVkGPxG5eLt5ZcIBftWKl6nFmgItAyYm2ixOrpNUOHjtuTOXuaMMABV91Y6CitQujsr0O76PsHduY0jG2j32wJAIluzspkzKS6sBp4MZvfG/ctUaqjDibYuvRZtE3Wv7kY7zH/lwKmD+BnGScFc8YTJUOlcRdqXtIPbX9Je2h5PtLUNmiLzcnjKxJ7dwsSc/QEuVXSY7k/jFkjIsv62EaLEcMtJrbuL+jvLg6/MpK2REuinLrkG9xK2JjgK9xhW6D7pEvQb/Dj3YFk0RbaP7EITsnrQaqZ1pL9aAEDzeG3qcsJSU2cn/wfGgZodwIDAQAB", this.gameObject.name);
-        AptoideBillingSDKManager.QuerySkuDetailsAsync(new string[] { "attempts" }, "inapp");
-        AptoideBillingSDKManager.QuerySkuDetailsAsync(new string[] { "golden_dice" }, "subs");
+        
     }
 
     // Update is called once per frame
@@ -191,9 +193,11 @@ public class Logic : MonoBehaviour,
 
     public void OnBillingSetupFinished(int responseCode)
     {
+        
         if (responseCode == 0) // Assuming 0 indicates success
         {
-            Debug.Log("Billing setup finished successfully.");
+            AptoideBillingSDKManager.QuerySkuDetailsAsync(inappSkus, "inapp");
+            AptoideBillingSDKManager.QuerySkuDetailsAsync(subsSkus, "subs");
         }
         else
         {
@@ -213,7 +217,7 @@ public class Logic : MonoBehaviour,
         }
     }
 
-    public void OnPurchasesUpdated(int responseCode, List<Purchase> purchases)
+    public void OnPurchasesUpdated(int responseCode, Purchase[] purchases)
     {
         if (responseCode == 0) // Assuming 0 indicates success
         {
@@ -229,7 +233,7 @@ public class Logic : MonoBehaviour,
         }
     }
 
-    public void OnSkuDetailsResponse(int responseCode, List<SkuDetails> skuDetailsList)
+    public void OnSkuDetailsResponse(int responseCode, SkuDetails[] skuDetailsList)
     {
         Debug.Log($"LOGIC SKU Details Response: {responseCode}");
         if (responseCode == 0) // Assuming 0 indicates success
