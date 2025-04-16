@@ -250,8 +250,11 @@ public class Logic : MonoBehaviour,
             }
 
             // Query purchases for both in-app and subscription products
-            AptoideBillingSDKManager.QueryPurchases("inapp");
-            AptoideBillingSDKManager.QueryPurchases("subs");
+            PurchasesResult inAppPurchasesResult = AptoideBillingSDKManager.QueryPurchases("inapp");
+            HandlePurchasesResult(inAppPurchasesResult);
+
+            PurchasesResult subsPurchasesResult = AptoideBillingSDKManager.QueryPurchases("subs");
+            HandlePurchasesResult(subsPurchasesResult);
 
             AptoideBillingSDKManager.QuerySkuDetailsAsync(inappSkus, "inapp");
             AptoideBillingSDKManager.QuerySkuDetailsAsync(subsSkus, "subs");
@@ -287,6 +290,7 @@ public class Logic : MonoBehaviour,
         else
         {
             Debug.LogError($"Failed to update purchases. Response code: {responseCode}");
+            ShowToast("Failed to update purchases.");
         }
     }
 
@@ -321,7 +325,26 @@ public class Logic : MonoBehaviour,
     public void OnBillingServiceDisconnected()
     {
         Debug.LogError("Billing service disconnected.");
+        // Disable the buttons if billing setup fails
+        _btnBuySDK.interactable = false;
+        _btnSubsSDK.interactable = false;
     }
 
+    // Add this method to handle the PurchasesResult
+    private void HandlePurchasesResult(PurchasesResult purchasesResult)
+    {
+        if (purchasesResult.responseCode == 0) // Assuming 0 indicates success
+        {
+            foreach (var purchase in purchasesResult.purchases)
+            {
+                Debug.Log($"Purchase found: {purchase.sku}");
+                StartCoroutine(ValidatePurchase(purchase));
+            }
+        }
+        else
+        {
+            Debug.LogError($"Failed to query purchases. Response code: {purchasesResult.responseCode}");
+        }
+    }
 
 }
