@@ -6,10 +6,10 @@ using TMPro;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 
-public class Logic : MonoBehaviour, 
-                    IAppCoinsBillingStateListener, 
-                    IConsumeResponseListener, 
-                    IPurchasesUpdatedListener, 
+public class Logic : MonoBehaviour,
+                    IAppCoinsBillingStateListener,
+                    IConsumeResponseListener,
+                    IPurchasesUpdatedListener,
                     ISkuDetailsResponseListener
 {
     [SerializeField]
@@ -39,17 +39,19 @@ public class Logic : MonoBehaviour,
     void Start()
     {
         if (PlayerPrefs.HasKey(ATTEMPTS_KEY))
+        {
             _currentAttempts = PlayerPrefs.GetInt(ATTEMPTS_KEY, 0);
+        }
         else
+        {
             _currentAttempts = _startingAttempts;
+        }
 
         UpdateAttemptsUI();
 
         _btnRoll.onClick.AddListener(OnRollDicePressed);
         _btnBuySDK.onClick.AddListener(OnBuySDKPressed);
         _btnSubsSDK.onClick.AddListener(OnSubsSDKPressed);
-
-        
 
         AptoideBillingSDKManager.InitializePlugin(
             this,
@@ -58,14 +60,6 @@ public class Logic : MonoBehaviour,
             this, 
             "INSERT HERE API KEY", 
             this.gameObject.name);
-
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     private void OnRollDicePressed()
@@ -136,15 +130,13 @@ public class Logic : MonoBehaviour,
                 if (responseText == "true")
                 {
                     Debug.Log($"Purchase validated successfully for {purchase.sku}. Consuming the purchase...");
-                    _currentAttempts = _startingAttempts; 
+                    _currentAttempts = _startingAttempts;
                     AptoideBillingSDKManager.ConsumeAsync(purchase.token);
 
                     if (purchase.itemType == "subs")
                     {
                         Debug.Log("Subscription purchased.");
-                        
-                        setGoldenDice();    
-                        
+                        setGoldenDice();
                     }
                     else
                     {
@@ -168,18 +160,19 @@ public class Logic : MonoBehaviour,
     {
         Color diceColor = new Color(168f / 255f, 125f / 255f, 5f / 255f);
         _dice.GetComponent<Image>().color = diceColor;
-        
+
         // Assuming _dice is the parent GameObject
         UIDice parentDice = _dice;
 
         int i = 1;
-        while(i<6){
+        while (i < 6)
+        {
             // Find the child GameObject by name
             Transform childTransform = parentDice.transform.Find(i.ToString());
             if (childTransform != null)
-            { 
+            {
                 GameObject childGameObject = childTransform.gameObject;
-                
+
                 // Get the Transform component of childGameObject
                 Transform childTransformm = childGameObject.transform;
 
@@ -188,7 +181,7 @@ public class Logic : MonoBehaviour,
                 {
                     Color diceColor_ = new Color(168f / 255f, 125f / 255f, 5f / 255f);
                     child.GetComponent<Image>().color = diceColor_;
-                }                    
+                }
             }
             else
             {
@@ -198,15 +191,9 @@ public class Logic : MonoBehaviour,
         }
     }
 
-
-
-
-
-
-
     private void ShowToast(string message)
     {
-    #if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR
         using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
         {
             AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
@@ -225,9 +212,9 @@ public class Logic : MonoBehaviour,
                 }));
             }
         }
-    #else
+#else
         Debug.Log($"Toast: {message}");
-    #endif
+#endif
     }
 
 
@@ -235,11 +222,10 @@ public class Logic : MonoBehaviour,
 
     public void OnBillingSetupFinished(int responseCode)
     {
-        
         if (responseCode == 0) // Assuming 0 indicates success
         {
             // Check if subscriptions are supported
-            if (AptoideBillingSDKManager.IsFeatureSupported("SUBSCRIPTIONS")==0)
+            if (AptoideBillingSDKManager.IsFeatureSupported("SUBSCRIPTIONS") == 0)
             {
                 Debug.Log("Subscriptions are supported.");
                 AptoideBillingSDKManager.QuerySkuDetailsAsync(subsSkus, "subs");
@@ -301,13 +287,13 @@ public class Logic : MonoBehaviour,
             foreach (var skuDetails in skuDetailsList)
             {
                 Debug.Log($"SKU Details received: {skuDetails.sku}");
-                if(skuDetails.sku == "attempts")
+                if (skuDetails.sku == "attempts")
                 {
                     Debug.Log($"Price for attempts: {skuDetails.price}");
                     // Update the UI or perform any action with the SKU details
-                    _btnBuySDK.GetComponentInChildren<TMP_Text>().text = "Buy Attempts: " + skuDetails.price; 
+                    _btnBuySDK.GetComponentInChildren<TMP_Text>().text = "Buy Attempts: " + skuDetails.price;
                 }
-                else if(skuDetails.sku == "golden_dice")
+                else if (skuDetails.sku == "golden_dice")
                 {
                     Debug.Log($"Price for golden dice subscription: {skuDetails.price}");
                     // Update the UI or perform any action with the SKU details
@@ -321,7 +307,7 @@ public class Logic : MonoBehaviour,
         }
     }
 
-        
+
     public void OnBillingServiceDisconnected()
     {
         Debug.LogError("Billing service disconnected.");
