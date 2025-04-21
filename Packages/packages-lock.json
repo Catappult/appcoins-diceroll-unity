@@ -1,14 +1,14 @@
 {
   "dependencies": {
     "com.aptoide.unityappcoinssdk": {
-      "version": "https://github.com/Catappult/appcoins-sdk-unity.git#v0.9.0.7",
+      "version": "https://github.com/Catappult/appcoins-sdk-unity.git",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.textmeshpro": "3.0.6",
         "com.unity.mobile.android-logcat": "1.3.2"
       },
-      "hash": "0f4fec309c0b4353b2c63e1d0a59b51192fbb31d"
+      "hash": "0d525d9288dd20958f091dc900382d56f4495767"
     },
     "com.unity.collab-proxy": {
       "version": "2.0.0",
@@ -51,9 +51,52 @@
     },
     "com.unity.mobile.android-logcat": {
       "version": "1.3.2",
-      "depth": 0,
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.nuget.newtonsoft-json": {
+      "version": "3.0.2",
+      "depth": 2,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.purchasing": {
+      "version": "4.3.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0",
+        "com.unity.services.core": "1.3.1",
+        "com.unity.modules.androidjni": "1.0.0",
+        "com.unity.services.analytics": "4.0.1",
+        "com.unity.modules.jsonserialize": "1.0.0",
+        "com.unity.modules.unityanalytics": "1.0.0",
+        "com.unity.modules.unitywebrequest": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.services.analytics": {
+      "version": "4.1.0",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0",
+        "com.unity.services.core": "1.4.0"
+      },
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.services.core": {
+      "version": "1.4.2",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.modules.androidjni": "1.0.0",
+        "com.unity.nuget.newtonsoft-json": "3.0.2",
+        "com.unity.modules.unitywebrequest": "1.0.0"
+      },
       "url": "https://packages.unity.com"
     },
     "com.unity.test-framework": {
