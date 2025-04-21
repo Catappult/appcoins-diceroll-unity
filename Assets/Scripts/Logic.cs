@@ -108,7 +108,7 @@ public class Logic : MonoBehaviour,
         _txtAttempts.text = _currentAttempts.ToString();
     }
 
-    private IEnumerator ValidatePurchase(Purchase purchase)
+    private IEnumerator ValidatePurchase(Purchase purchase, bool isDebugVersion = false)
     {
         string url = $"https://sdk.diceroll.catappult.io/validate/{purchase.packageName}/{purchase.sku}/{purchase.token}";
         using (UnityWebRequest webRequest = UnityWebRequest.Get(url))
@@ -127,7 +127,7 @@ public class Logic : MonoBehaviour,
                 Debug.Log($"Validation response for {purchase.sku}: {responseText}");
 
                 // Check if the response is "true" or "false"
-                if (responseText == "true")
+                if (isDebugVersion || responseText == "true")
                 {
                     Debug.Log($"Purchase validated successfully for {purchase.sku}. Consuming the purchase...");
                     _currentAttempts = _startingAttempts;
