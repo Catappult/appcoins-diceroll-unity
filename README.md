@@ -1,29 +1,32 @@
-# DiceRoll App with Aptoide Connect Billing SDK Integration
+# Aptoide Diceroll Unity sample
 
-This repository contains the source code for a simple Dice Roll app that integrates the Aptoide Connect Billing SDK. This project is imlemented in Unity and the integration is made via Unity Package Manager allowing users to make in-app purchases and subscriptions, enhancing their gameplay experience. We are using Version 9.+ version of the UPM.
+   - [💻 About](#-about)
+   - [⚙️ Design/Features](#️-designfeatures)
+   - [🚀 How to run it](#-how-to-run-it)
+   - [Limitations](#limitations)
+   - [Prerequisites](#prerequisites)
 
-## Features
+## 💻 About
 
-* **Basic Dice Roll Functionality:**
-    * Simulates rolling a standard six-sided die.
-* **Aptoide Connect Billing SDK Integration:**
-    * Enables in-app purchases for:
-        * Extra roll attempts.
-        * Golden Dice feature (higher chance of rolling a 6).
-        * Subscription for unlimited rolls.
-* **Enhanced Gameplay:**
-    * Purchases and subscriptions directly impact the game's mechanics.
-    * Provides a seamless purchasing experience for Aptoide users.
+This sample app is used to show the integration via [Aptoide Unity Billing SDK](https://docs.catappult.io/docs/unity-sdk) of the AppCoins Billing System.
 
-## Getting Started
+> This sample app is still under development and some features might be imcomplete for now.
 
-### Prerequisites
+## ⚙️ Design/Features
+
+- Simple roll of the dice game with statistics for rolls to avoid having an oversimplified case and allow for some navigation and state managment
+- Number of rolls available are limited to 3 maximum, requiring a payment if it reaches 0. Resetting to max if payment was completed.
+- If the roll is guess is correct, it resets to the maximum just like a payment would.
+- Contains also a Golden Dice which is managed via Subscriptions.
+
+## 🚀 How to run it
+
+To correctly test the Application, update the [CATAPPULT_PUBLIC_KEY](https://github.com/Catappult/appcoins-diceroll-unity/blob/main/Assets/Scripts/Logic.cs#L61) with the Sample key on [Aptoide Documentation]([https://docs.catappult.io/docs/native-android-billing-sdk#faq](https://docs.catappult.io/docs/billing-integration#public-key)).
+
+## Limitations
+
+Since this app is still under development, some features may not be fully developed.
+
+## Prerequisites
 
 Unity 2021.3.8f1
-
-### Steps
-
-1) Open project
-2) Set build setting to Android platform
-3) Set the API_KEY, SKUs.
-4) Launch App.
