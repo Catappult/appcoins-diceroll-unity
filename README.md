@@ -8,7 +8,9 @@
 
 ## 💻 About
 
-This sample app is used to show the integration via [Aptoide Unity Billing SDK](https://docs.catappult.io/docs/unity-sdk) of the AppCoins Billing System.
+This sample app is used to show the integration of [Aptoide Unity Billing SDK](https://github.com/Catappult/appcoins-sdk-unity) following the official Aptoide Unity Billing SDK [integration documentation](https://docs.catappult.io/docs/unity-sdk).
+
+You can download it in our offical Aptoide [page](https://com-appcoins-diceroll-unity.en.aptoide.com/app).
 
 > This sample app is still under development and some features might be imcomplete for now.
 
