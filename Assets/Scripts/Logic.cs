@@ -56,9 +56,9 @@ public class Logic : MonoBehaviour,
         AptoideBillingSDKManager.InitializePlugin(
             this,
             this,
-            this, 
-            this, 
-            "INSERT HERE API KEY", 
+            this,
+            this,
+            "INSERT HERE API KEY",
             this.gameObject.name);
     }
 
@@ -99,7 +99,7 @@ public class Logic : MonoBehaviour,
     private void OnSubsSDKPressed()
     {
         ShowToast("Subscribe SDK button pressed.");
-        AptoideBillingSDKManager.LaunchBillingFlow("golden_dice", "subs", "developerPayload");
+        AptoideBillingSDKManager.LaunchBillingFlow("golden_dice", "subs", "developerPayload", "123456789", true);
     }
 
     private void UpdateAttemptsUI()
