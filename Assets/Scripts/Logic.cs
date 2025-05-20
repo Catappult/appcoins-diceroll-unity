@@ -99,7 +99,7 @@ public class Logic : MonoBehaviour,
     private void OnSubsSDKPressed()
     {
         ShowToast("Subscribe SDK button pressed.");
-        AptoideBillingSDKManager.LaunchBillingFlow("golden_dice", "subs", "developerPayload", "123456789", true);
+        AptoideBillingSDKManager.LaunchBillingFlow("golden_dice", "subs", "developerPayload");
     }
 
     private void UpdateAttemptsUI()
