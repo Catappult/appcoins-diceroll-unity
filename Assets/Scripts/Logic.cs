@@ -10,7 +10,8 @@ public class Logic : MonoBehaviour,
                     IAppCoinsBillingStateListener,
                     IConsumeResponseListener,
                     IPurchasesUpdatedListener,
-                    ISkuDetailsResponseListener
+                    IProductDetailsResponseListener,
+                    IPurchasesResponseListener
 {
     [SerializeField]
     private int _startingAttempts = 3;
@@ -32,8 +33,20 @@ public class Logic : MonoBehaviour,
     public const string ATTEMPTS_KEY = "Attempts";
     private int _currentAttempts = 0;
 
-    private static string[] inappSkus = new string[] { "attempts" };
-    private static string[] subsSkus = new string[] { "golden_dice" };
+    private static List<QueryProductDetailsParams.Product> inappProducts =
+                           new List<QueryProductDetailsParams.Product>() {
+                               QueryProductDetailsParams.Product.NewBuilder()
+                                   .SetProductId("attempts")
+                                   .SetProductType("inapp")
+                                   .Build()
+                           };
+    private static List<QueryProductDetailsParams.Product> subsProducts =
+                           new List<QueryProductDetailsParams.Product>() {
+                               QueryProductDetailsParams.Product.NewBuilder()
+                                   .SetProductId("golden_dice")
+                                   .SetProductType("subs")
+                                   .Build()
+                           };
 
     // Start is called before the first frame update
     void Start()
@@ -228,22 +241,35 @@ public class Logic : MonoBehaviour,
             if (AptoideBillingSDKManager.IsFeatureSupported("SUBSCRIPTIONS") == 0)
             {
                 Debug.Log("Subscriptions are supported.");
-                AptoideBillingSDKManager.QuerySkuDetailsAsync(subsSkus, "subs");
+                QueryProductDetailsParams queryProductDetailsParamsSubs =
+                    QueryProductDetailsParams.NewBuilder()
+                        .SetProductList(subsProducts)
+                        .Build();
+                AptoideBillingSDKManager.QueryProductDetailsAsync(queryProductDetailsParamsSubs);
             }
             else
             {
                 Debug.LogWarning("Subscriptions are not supported on this device.");
             }
 
+            QueryProductDetailsParams queryProductDetailsParamsInapps =
+                QueryProductDetailsParams.NewBuilder()
+                    .SetProductList(inappProducts)
+                    .Build();
+            AptoideBillingSDKManager.QueryProductDetailsAsync(queryProductDetailsParamsInapps);
+
             // Query purchases for both in-app and subscription products
-            PurchasesResult inAppPurchasesResult = AptoideBillingSDKManager.QueryPurchases("inapp");
-            HandlePurchasesResult(inAppPurchasesResult);
+            QueryPurchasesParams queryPurchasesParamsInapps =
+                QueryPurchasesParams.NewBuilder()
+                    .SetProductType("inapp")
+                    .Build();
+            AptoideBillingSDKManager.QueryPurchasesAsync(queryPurchasesParamsInapps);
 
-            PurchasesResult subsPurchasesResult = AptoideBillingSDKManager.QueryPurchases("subs");
-            HandlePurchasesResult(subsPurchasesResult);
-
-            AptoideBillingSDKManager.QuerySkuDetailsAsync(inappSkus, "inapp");
-            AptoideBillingSDKManager.QuerySkuDetailsAsync(subsSkus, "subs");
+            QueryPurchasesParams queryPurchasesParamsSubs =
+                QueryPurchasesParams.NewBuilder()
+                    .SetProductType("subs")
+                    .Build();
+            AptoideBillingSDKManager.QueryPurchasesAsync(queryPurchasesParamsSubs);
         }
         else
         {
@@ -280,30 +306,47 @@ public class Logic : MonoBehaviour,
         }
     }
 
-    public void OnSkuDetailsResponse(int responseCode, SkuDetails[] skuDetailsList)
+    public void OnQueryPurchasesResponse(BillingResult billingResult, Purchase[] purchases)
     {
-        if (responseCode == 0) // Assuming 0 indicates success
+        if (billingResult.ResponseCode == 0) // Assuming 0 indicates success
         {
-            foreach (var skuDetails in skuDetailsList)
+            foreach (var purchase in purchases)
             {
-                Debug.Log($"SKU Details received: {skuDetails.sku}");
-                if (skuDetails.sku == "attempts")
+                Debug.Log($"Purchase updated: {purchase.sku}");
+                StartCoroutine(ValidatePurchase(purchase));
+            }
+        }
+        else
+        {
+            Debug.LogError($"Failed to update purchases. Response code: {billingResult.ResponseCode}");
+            ShowToast("Failed to update purchases.");
+        }
+    }
+
+    public void OnProductDetailsResponse(BillingResult billingResult, ProductDetails[] details)
+    {
+        if (billingResult.ResponseCode == 0) // Assuming 0 indicates success
+        {
+            foreach (var productDetails in details)
+            {
+                Debug.Log($"SKU Details received: {productDetails.ProductId}");
+                if (productDetails.ProductId == "attempts")
                 {
-                    Debug.Log($"Price for attempts: {skuDetails.price}");
+                    Debug.Log($"Price for attempts: {productDetails.OneTimePurchaseOfferDetails.FormattedPrice}");
                     // Update the UI or perform any action with the SKU details
-                    _btnBuySDK.GetComponentInChildren<TMP_Text>().text = "Buy Attempts: " + skuDetails.price;
+                    _btnBuySDK.GetComponentInChildren<TMP_Text>().text = "Buy Attempts: " + productDetails.OneTimePurchaseOfferDetails.FormattedPrice;
                 }
-                else if (skuDetails.sku == "golden_dice")
+                else if (productDetails.ProductId == "golden_dice")
                 {
-                    Debug.Log($"Price for golden dice subscription: {skuDetails.price}");
+                    Debug.Log($"Price for golden dice subscription: {productDetails.SubscriptionOfferDetails[0].PricingPhases.PricingPhaseList[0].FormattedPrice}");
                     // Update the UI or perform any action with the SKU details
-                    _btnSubsSDK.GetComponentInChildren<TMP_Text>().text = "Buy Subs: " + skuDetails.price;
+                    _btnSubsSDK.GetComponentInChildren<TMP_Text>().text = "Buy Subs: " + productDetails.SubscriptionOfferDetails[0].PricingPhases.PricingPhaseList[0].FormattedPrice;
                 }
             }
         }
         else
         {
-            Debug.LogError($"Failed to receive SKU details. Response code: {responseCode}");
+            Debug.LogError($"Failed to receive SKU details. Response code: {billingResult.ResponseCode}");
         }
     }
 
