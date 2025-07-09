@@ -71,6 +71,7 @@ public class Logic : MonoBehaviour,
             this,
             this,
             this,
+            this,
             "INSERT HERE API KEY",
             this.gameObject.name);
     }
